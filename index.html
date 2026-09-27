@@ -13,7 +13,8 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 .task{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #243744}.task:last-child{border:0}.task.done{opacity:.55}.task.done b{text-decoration:line-through}
 .small{color:var(--muted);font-size:14px}.alert{position:fixed;inset:16px 16px auto;max-width:650px;margin:auto;background:#103d2b;border:2px solid var(--green);padding:18px;border-radius:16px;text-align:center;font-weight:900;z-index:10;transform:translateY(-160%);transition:.35s}.alert.show{transform:translateY(0)}
 .big{font-size:20px;padding:18px}.center{text-align:center}.tag{color:var(--green);font-weight:800}
-</style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><main class="wrap">
+ .victory{position:fixed;inset:0;background:radial-gradient(circle,#174d3a,#050b10 70%);z-index:100;display:none;align-items:center;justify-content:center;text-align:center;padding:25px}.victory.show{display:flex}.victory h1{font-size:clamp(42px,10vw,100px);margin:0;color:var(--green);text-shadow:0 0 35px #58e38c88}.victory p{font-size:clamp(18px,4vw,32px)}.victory .ship{font-size:80px;animation:win 1s ease-in-out infinite alternate}@keyframes win{to{transform:translateY(-18px) scale(1.08)}}
+</style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><main class="wrap">
 <div class="brand"><h1>THE SKELD</h1><p>MISSION CONTROL // EVG</p></div>
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><button class="big" style="width:100%" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
@@ -34,7 +35,7 @@ const TASKS=[
 ["Salle de sport","Franchis les obstacles sur 10 mètres."],
 ["Chambre / Bazar","Range les affaires de la zone prévue."]
 ];
-let room="",me="",isHost=false,state=null,unsub=null;
+let room="",me="",isHost=false,state=null,unsub=null,victoryShown=false;
 function fresh(code){return {code,players:{},done:{0:false,1:false,2:false,3:false,4:false},log:{created:{text:"Partie créée",ts:Date.now()}}}}
 function roomRef(){return ref(db,"rooms/"+room)}
 async function host(){isHost=true;me="Console";room=Math.random().toString(36).slice(2,6).toUpperCase();state=fresh(room);await set(roomRef(),state);localStorage.setItem("skeld_session",JSON.stringify({room,me,isHost:true}));listen();openGame()}
@@ -58,7 +59,7 @@ async function join(){
   status.textContent="❌ Connexion impossible : "+(e?.message||"erreur Firebase");
  }
 }
-function listen(){if(unsub)unsub();unsub=onValue(roomRef(),snap=>{if(!snap.exists())return;let previous=state;state=snap.val();render();if(previous&&JSON.stringify(previous.done)!==JSON.stringify(state.done)&&isHost){flash("✓ MISSION VALIDÉE !");beep()}})}
+function listen(){if(unsub)unsub();unsub=onValue(roomRef(),snap=>{if(!snap.exists())return;let previous=state;state=snap.val();render();if(previous&&JSON.stringify(previous.done)!==JSON.stringify(state.done)&&isHost){flash("✓ MISSION VALIDÉE !");beep();const d=state.done||{};if(Object.values(d).filter(Boolean).length>=TASKS.length&&!victoryShown){victoryShown=true;showVictory()}}})}
 async function addLog(text){let id=Date.now()+"_"+Math.random().toString(36).slice(2,6);await set(ref(db,"rooms/"+room+"/log/"+id),{text,ts:Date.now()})}
 function safeKey(s){return s.replace(/[.#$\[\]\/]/g,"_")}
 function openGame(){document.querySelector("#home").classList.add("hidden");document.querySelector("#game").classList.remove("hidden");document.querySelector("#roomCode").textContent=room;document.querySelector("#hostPanel").classList.toggle("hidden",!isHost);document.querySelector("#playerPanel").classList.toggle("hidden",isHost);document.querySelector("#role").textContent=isHost?"MODE CONSOLE":"CREWMATE";render()}
@@ -83,10 +84,10 @@ async function resetGame(){
  await set(ref(db,"rooms/"+room+"/done"),{0:false,1:false,2:false,3:false,4:false});
  await addLog("Missions réinitialisées");
 }
-function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
+function showVictory(){document.querySelector("#victory").classList.add("show");victorySound()}\nfunction closeVictory(){document.querySelector("#victory").classList.remove("show")}\nfunction victorySound(){try{const ctx=new AudioContext();const notes=[523,659,784,1047,784,1047];notes.forEach((freq,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=freq;g.gain.setValueAtTime(.0001,ctx.currentTime+i*.22);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.22+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.22+.2);o.start(ctx.currentTime+i*.22);o.stop(ctx.currentTime+i*.22+.21)})}catch(e){console.error(e)}}\nfunction flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.resetGame=resetGame;
+window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.resetGame=resetGame;window.closeVictory=closeVictory;
 (async function restoreSession(){
  try{
   const s=JSON.parse(localStorage.getItem("skeld_session")||"null");
