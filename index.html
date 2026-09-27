@@ -98,7 +98,10 @@ async function resetGame(){
  await set(ref(db,"rooms/"+room+"/done"),{0:false,1:false,2:false,3:false,4:false});
  await addLog("Missions réinitialisées");
 }
-function showVictory(){document.querySelector("#victory").classList.add("show");victorySound()}\nfunction closeVictory(){document.querySelector("#victory").classList.remove("show")}\nfunction victorySound(){try{const ctx=new AudioContext();const notes=[523,659,784,1047,784,1047];notes.forEach((freq,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=freq;g.gain.setValueAtTime(.0001,ctx.currentTime+i*.22);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.22+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.22+.2);o.start(ctx.currentTime+i*.22);o.stop(ctx.currentTime+i*.22+.21)})}catch(e){console.error(e)}}\nfunction flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
+function showVictory(){document.querySelector("#victory").classList.add("show");victorySound()}
+function closeVictory(){document.querySelector("#victory").classList.remove("show")}
+function victorySound(){try{const ctx=new AudioContext();const notes=[523,659,784,1047,784,1047];notes.forEach((freq,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=freq;g.gain.setValueAtTime(.0001,ctx.currentTime+i*.22);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.22+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.22+.2);o.start(ctx.currentTime+i*.22);o.stop(ctx.currentTime+i*.22+.21)})}catch(e){console.error(e)}}
+function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.resetGame=resetGame;window.closeVictory=closeVictory;
