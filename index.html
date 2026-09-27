@@ -13,13 +13,13 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 .task{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #243744}.task:last-child{border:0}.task.done{opacity:.55}.task.done b{text-decoration:line-through}
 .small{color:var(--muted);font-size:14px}.alert{position:fixed;inset:16px 16px auto;max-width:650px;margin:auto;background:#103d2b;border:2px solid var(--green);padding:18px;border-radius:16px;text-align:center;font-weight:900;z-index:10;transform:translateY(-160%);transition:.35s}.alert.show{transform:translateY(0)}
 .big{font-size:20px;padding:18px}.center{text-align:center}.tag{color:var(--green);font-weight:800}
- .victory{position:fixed;inset:0;background:radial-gradient(circle,#174d3a,#050b10 70%);z-index:100;display:none;align-items:center;justify-content:center;text-align:center;padding:25px}.victory.show{display:flex}.victory h1{font-size:clamp(42px,10vw,100px);margin:0;color:var(--green);text-shadow:0 0 35px #58e38c88}.victory p{font-size:clamp(18px,4vw,32px)}.victory .ship{font-size:80px;animation:win 1s ease-in-out infinite alternate}@keyframes win{to{transform:translateY(-18px) scale(1.08)}}
-</style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><main class="wrap">
+ .victory{position:fixed;inset:0;background:radial-gradient(circle,#174d3a,#050b10 70%);z-index:100;display:none;align-items:center;justify-content:center;text-align:center;padding:25px}.victory.show{display:flex}.victory h1{font-size:clamp(42px,10vw,100px);margin:0;color:var(--green);text-shadow:0 0 35px #58e38c88}.victory p{font-size:clamp(18px,4vw,32px)}.victory .ship{font-size:80px;animation:win 1s ease-in-out infinite alternate}.meeting{background:radial-gradient(circle,#5a1118,#080506 72%)}.meeting h1{color:var(--red);text-shadow:0 0 35px #ff596488}.meeting .tag{color:#ffd3d6}@keyframes win{to{transform:translateY(-18px) scale(1.08)}}
+</style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><div id="meeting" class="victory meeting"><div><div class="ship">🚨</div><h1>RÉUNION D’URGENCE</h1><p id="meetingText">UN CORPS A ÉTÉ SIGNALÉ</p><div class="tag">REJOIGNEZ LE CONSEIL POUR DÉBATTRE</div><button class="big" style="margin-top:30px" onclick="closeMeeting()">J’ARRIVE AU CONSEIL</button></div></div><main class="wrap">
 <div class="brand"><h1>THE SKELD</h1><p>MISSION CONTROL // EVG</p></div>
-<section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><button class="big" style="width:100%" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
+<section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
-<div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div></div>
-<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Joueurs connectés</div><div id="players" class="players"></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="danger" onclick="resetGame()">Réinitialiser les missions</button></div>
+<div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div><div id="gameSettings" class="small" style="margin-top:8px"></div></div>
+<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Joueurs connectés</div><div id="players" class="players"></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="primary big" style="width:100%;margin-top:14px" onclick="newGame()">🔄 REFAIRE UNE PARTIE</button></div>
 <div id="playerPanel" class="card hidden"><h2>📱 Mes missions</h2><p class="small">Réalise physiquement la mission, puis valide-la ici.</p><div id="playerTasks"></div><button class="danger big" style="width:100%;margin-top:18px" onclick="report()">🚨 REPORT / CORPS TROUVÉ</button></div>
 <div class="card"><h3>📡 Journal de bord</h3><div id="log" class="small">En attente…</div></div>
 </section></main>
@@ -36,9 +36,19 @@ const TASKS=[
 ["Chambre / Bazar","Range les affaires de la zone prévue."]
 ];
 let room="",me="",isHost=false,state=null,unsub=null,victoryShown=false;
-function fresh(code){return {code,players:{},done:{0:false,1:false,2:false,3:false,4:false},log:{created:{text:"Partie créée",ts:Date.now()}}}}
+function fresh(code,playerCount=8,impostorCount=2){return {code,settings:{playerCount,impostorCount},round:1,players:{},done:{0:false,1:false,2:false,3:false,4:false},log:{created:{text:"Partie créée",ts:Date.now()}}}}
 function roomRef(){return ref(db,"rooms/"+room)}
-async function host(){isHost=true;me="Console";room=Math.random().toString(36).slice(2,6).toUpperCase();state=fresh(room);await set(roomRef(),state);localStorage.setItem("skeld_session",JSON.stringify({room,me,isHost:true}));listen();openGame()}
+async function host(){
+ const playerCount=Number(document.querySelector("#hostPlayers").value);
+ const impostorCount=Number(document.querySelector("#hostImpostors").value);
+ const status=document.querySelector("#joinStatus");
+ if(!Number.isInteger(playerCount)||playerCount<3){status.textContent="⚠️ Prévois au moins 3 joueurs.";return}
+ if(!Number.isInteger(impostorCount)||impostorCount<1||impostorCount>=playerCount){status.textContent="⚠️ Le nombre d’imposteurs doit être inférieur au nombre de joueurs.";return}
+ isHost=true;me="Console";room=Math.random().toString(36).slice(2,6).toUpperCase();state=fresh(room,playerCount,impostorCount);
+ await set(roomRef(),state);
+ localStorage.setItem("skeld_session",JSON.stringify({room,me,isHost:true}));
+ listen();openGame()
+}
 async function join(){
  const status=document.querySelector("#joinStatus");
  try{
@@ -48,6 +58,8 @@ async function join(){
   status.textContent="Connexion à la salle "+room+"…";
   const snap=await get(ref(db,"rooms/"+room));
   if(!snap.exists()){status.textContent="❌ Salle "+room+" introuvable. Vérifie le code affiché sur le PC.";return}
+  const roomData=snap.val(), maxPlayers=Number(roomData.settings?.playerCount||99), currentPlayers=Object.keys(roomData.players||{}).length;
+  if(!roomData.players?.[safeKey(me)] && currentPlayers>=maxPlayers){status.textContent="❌ La partie est complète ("+maxPlayers+" joueurs).";return}
   await set(ref(db,"rooms/"+room+"/players/"+safeKey(me)),me);
   await addLog(me+" a rejoint l’équipage");
   state=snap.val();
@@ -66,19 +78,32 @@ function listen(){
   const previous=state;
   state=snap.val();
   render();
+
   const d=state.done||{};
   const completed=Object.values(d).filter(v=>v===true).length;
+
+  if(completed<TASKS.length) victoryShown=false;
   if(isHost&&previous&&JSON.stringify(previous.done||{})!==JSON.stringify(d)){flash("✓ MISSION VALIDÉE !");beep()}
-  if(completed>=TASKS.length&&!victoryShown){
-   victoryShown=true;
-   setTimeout(showVictory,350);
+  if(completed>=TASKS.length&&!victoryShown){victoryShown=true;setTimeout(showVictory,250)}
+
+  const oldReport=previous?.lastReport?.id||null;
+  const newReport=state?.lastReport?.id||null;
+  if(previous&&newReport&&newReport!==oldReport){
+    showMeeting(state.lastReport.by||"Un joueur");
+  }
+
+  if(previous && (state.round||1)!==(previous.round||1)){
+    victoryShown=false;
+    closeVictory();
+    closeMeeting();
+    flash("🔄 Nouvelle partie — missions remises à zéro !");
   }
  })
 }
 async function addLog(text){let id=Date.now()+"_"+Math.random().toString(36).slice(2,6);await set(ref(db,"rooms/"+room+"/log/"+id),{text,ts:Date.now()})}
 function safeKey(s){return s.replace(/[.#$\[\]\/]/g,"_")}
 function openGame(){document.querySelector("#home").classList.add("hidden");document.querySelector("#game").classList.remove("hidden");document.querySelector("#roomCode").textContent=room;document.querySelector("#hostPanel").classList.toggle("hidden",!isHost);document.querySelector("#playerPanel").classList.toggle("hidden",isHost);document.querySelector("#role").textContent=isHost?"MODE CONSOLE":"CREWMATE";render()}
-function render(){if(!state)return;let done=state.done||{},players=Object.values(state.players||{}),logs=Object.values(state.log||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));let n=Object.values(done).filter(Boolean).length,p=Math.round(n/TASKS.length*100);document.querySelector("#pct").textContent=p+"%";document.querySelector("#fill").style.width=p+"%";document.querySelector("#players").innerHTML=players.map(x=>'<span class="pill">👨‍🚀 '+esc(x)+'</span>').join("")||'<span class="small">Aucun joueur</span>';let rows=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><span>'+(done[i]?'✅':'⬜')+'</span></div>').join("");document.querySelector("#hostTasks").innerHTML=rows;document.querySelector("#playerTasks").innerHTML=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><button '+(done[i]?'disabled':'')+' onclick="completeTask('+i+')">'+(done[i]?'FAIT':'VALIDER')+'</button></div>').join("");document.querySelector("#log").innerHTML=logs.slice(0,8).map(x=>esc(x.text||x)).join("<br>")}
+function render(){if(!state)return;const gs=state.settings||{};document.querySelector("#gameSettings").textContent=(gs.playerCount||"?")+" joueurs • "+(gs.impostorCount||"?")+" imposteur"+((gs.impostorCount||0)>1?"s":"")+" prévu"+((gs.impostorCount||0)>1?"s":"");let done=state.done||{},players=Object.values(state.players||{}),logs=Object.values(state.log||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));let n=Object.values(done).filter(Boolean).length,p=Math.round(n/TASKS.length*100);document.querySelector("#pct").textContent=p+"%";document.querySelector("#fill").style.width=p+"%";document.querySelector("#players").innerHTML=players.map(x=>'<span class="pill">👨‍🚀 '+esc(x)+'</span>').join("")||'<span class="small">Aucun joueur</span>';let rows=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><span>'+(done[i]?'✅':'⬜')+'</span></div>').join("");document.querySelector("#hostTasks").innerHTML=rows;document.querySelector("#playerTasks").innerHTML=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><button '+(done[i]?'disabled':'')+' onclick="completeTask('+i+')">'+(done[i]?'FAIT':'VALIDER')+'</button></div>').join("");document.querySelector("#log").innerHTML=logs.slice(0,8).map(x=>esc(x.text||x)).join("<br>")}
 async function completeTask(i){
  try{
   if(state?.done?.[i])return;
@@ -90,22 +115,31 @@ async function completeTask(i){
 }
 async function report(){
  try{
+  const event={id:Date.now()+"_"+Math.random().toString(36).slice(2,7),by:me,ts:Date.now()};
+  await set(ref(db,"rooms/"+room+"/lastReport"),event);
   await addLog("🚨 "+me+" signale un corps !");
-  await set(ref(db,"rooms/"+room+"/lastReport"),{by:me,ts:Date.now()});
-  flash("🚨 REPORT ! RÉUNION D’URGENCE");beep(true);
  }catch(e){flash("❌ REPORT impossible");console.error(e)}
 }
-async function resetGame(){
- await set(ref(db,"rooms/"+room+"/done"),{0:false,1:false,2:false,3:false,4:false});
- await addLog("Missions réinitialisées");
+async function newGame(){
+ if(!isHost)return;
+ const nextRound=Number(state?.round||1)+1;
+ closeVictory();closeMeeting();victoryShown=false;
+ await update(roomRef(),{
+  round:nextRound,
+  done:{0:false,1:false,2:false,3:false,4:false},
+  lastReport:null
+ });
+ await addLog("🔄 Nouvelle partie lancée par la console");
 }
-function showVictory(){document.querySelector("#victory").classList.add("show");victorySound()}
+function showVictory(){document.querySelector("#victory").classList.add("show");victorySound();try{navigator.vibrate?.([200,100,200])}catch{}}
+function showMeeting(by){document.querySelector("#meetingText").textContent="🚨 "+by+" A SIGNALÉ UN CORPS";document.querySelector("#meeting").classList.add("show");beep(true);try{navigator.vibrate?.([300,120,300,120,500])}catch{}}
+function closeMeeting(){document.querySelector("#meeting").classList.remove("show")}
 function closeVictory(){document.querySelector("#victory").classList.remove("show")}
 function victorySound(){try{const ctx=new AudioContext();const notes=[523,659,784,1047,784,1047];notes.forEach((freq,i)=>{const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);o.frequency.value=freq;g.gain.setValueAtTime(.0001,ctx.currentTime+i*.22);g.gain.exponentialRampToValueAtTime(.16,ctx.currentTime+i*.22+.02);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+i*.22+.2);o.start(ctx.currentTime+i*.22);o.stop(ctx.currentTime+i*.22+.21)})}catch(e){console.error(e)}}
 function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.resetGame=resetGame;window.closeVictory=closeVictory;
+window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.newGame=newGame;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
 (async function restoreSession(){
  try{
   const s=JSON.parse(localStorage.getItem("skeld_session")||"null");
