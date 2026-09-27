@@ -19,7 +19,7 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div><div id="gameSettings" class="small" style="margin-top:8px"></div></div>
-<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Joueurs connectés</div><div id="players" class="players"></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="primary big" style="width:100%;margin-top:14px" onclick="newGame()">🔄 REFAIRE UNE PARTIE</button><div class="row" style="margin-top:10px"><button onclick="leaveGame()">↩️ QUITTER LA PARTIE</button><button class="danger" onclick="closeRoom()">⛔ FERMER LE SALON</button></div></div>
+<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Joueurs connectés</div><div id="players" class="players"></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="primary big" style="width:100%;margin-top:14px" onclick="newGame()">🔄 TERMINER ET REFAIRE UNE PARTIE</button><div class="row" style="margin-top:10px"><button onclick="leaveGame()">↩️ QUITTER LA PARTIE</button><button class="danger" onclick="closeRoom()">⛔ FERMER LE SALON</button></div></div>
 <div id="playerPanel" class="card hidden"><h2>📱 Mes missions</h2><p class="small">Réalise physiquement la mission, puis valide-la ici.</p><div id="playerTasks"></div><button class="danger big" style="width:100%;margin-top:18px" onclick="report()">🚨 REPORT / CORPS TROUVÉ</button><button style="width:100%;margin-top:10px" onclick="leaveGame()">↩️ QUITTER LA PARTIE</button></div>
 <div class="card"><h3>📡 Journal de bord</h3><div id="log" class="small">En attente…</div></div>
 </section></main>
@@ -80,6 +80,10 @@ function listen(){
   }
   const previous=state;
   state=snap.val();
+  if(state?.ended){
+    returnHome(state.ended.reason==="rematch"?"🔄 La partie est terminée. Rejoins le nouveau salon pour la revanche !":"⛔ La partie est terminée.");
+    return;
+  }
   render();
 
   const d=state.done||{};
@@ -149,14 +153,12 @@ function returnHome(message=""){
 }
 async function newGame(){
  if(!isHost)return;
- const nextRound=Number(state?.round||1)+1;
- closeVictory();closeMeeting();victoryShown=false;
- await update(roomRef(),{
-  round:nextRound,
-  done:{0:false,1:false,2:false,3:false,4:false},
-  lastReport:null
- });
- await addLog("🔄 Nouvelle partie lancée par la console");
+ if(!confirm("Terminer cette partie et revenir à la création d’un nouveau salon ?"))return;
+ try{
+  await update(roomRef(),{ended:{id:Date.now()+"_"+Math.random().toString(36).slice(2,7),reason:"rematch",ts:Date.now()}});
+  setTimeout(async()=>{try{await set(roomRef(),null)}catch(e){console.error(e)}},700);
+  returnHome("🔄 Partie terminée. Configure la revanche et crée un nouveau salon.");
+ }catch(e){flash("❌ Impossible de terminer la partie");console.error(e)}
 }
 function showVictory(){document.querySelector("#victory").classList.add("show");victorySound();try{navigator.vibrate?.([200,100,200])}catch{}}
 function showMeeting(by){document.querySelector("#meetingText").textContent="🚨 "+by+" A SIGNALÉ UN CORPS";document.querySelector("#meeting").classList.add("show");beep(true);try{navigator.vibrate?.([300,120,300,120,500])}catch{}}
