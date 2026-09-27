@@ -15,14 +15,18 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 .big{font-size:20px;padding:18px}.center{text-align:center}.tag{color:var(--green);font-weight:800}
 </style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><main class="wrap">
 <div class="brand"><h1>THE SKELD</h1><p>MISSION CONTROL // EVG</p></div>
-<section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><button class="big" style="width:100%" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Prototype : plusieurs onglets du même navigateur se synchronisent déjà. La synchronisation entre téléphones sera activée avec la base temps réel.</p></section>
+<section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><button class="big" style="width:100%" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div></div>
 <div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Joueurs connectés</div><div id="players" class="players"></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="danger" onclick="resetGame()">Réinitialiser les missions</button></div>
 <div id="playerPanel" class="card hidden"><h2>📱 Mes missions</h2><p class="small">Réalise physiquement la mission, puis valide-la ici.</p><div id="playerTasks"></div><button class="danger big" style="width:100%;margin-top:18px" onclick="report()">🚨 REPORT / CORPS TROUVÉ</button></div>
 <div class="card"><h3>📡 Journal de bord</h3><div id="log" class="small">En attente…</div></div>
 </section></main>
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-database.js";
+const firebaseConfig={apiKey:"AIzaSyAyJ2EBHU9bB8XJGIUQE15cAoflIWXjT2g",authDomain:"among-us-evg-bc433.firebaseapp.com",databaseURL:"https://among-us-evg-bc433-default-rtdb.europe-west1.firebasedatabase.app",projectId:"among-us-evg-bc433",storageBucket:"among-us-evg-bc433.firebasestorage.app",messagingSenderId:"643537336835",appId:"1:643537336835:web:7ba199528421cdb6cc2c36"};
+const app=initializeApp(firebaseConfig); const db=getDatabase(app);
 const TASKS=[
 ["Pyramide de gobelets","Construis la pyramide de gobelets."],
 ["Électricité","Relie correctement les fils électriques."],
@@ -30,20 +34,21 @@ const TASKS=[
 ["Salle de sport","Franchis les obstacles sur 10 mètres."],
 ["Chambre / Bazar","Range les affaires de la zone prévue."]
 ];
-let room="",me="",isHost=false,state=null;
-const channel=new BroadcastChannel("skeld-evg");
-function fresh(code){return {code,players:[],done:Array(TASKS.length).fill(false),log:["Partie créée"]}}
-function save(){localStorage.setItem("skeld_"+room,JSON.stringify(state));channel.postMessage({room,state});render()}
-function load(){state=JSON.parse(localStorage.getItem("skeld_"+room)||"null")||fresh(room)}
-channel.onmessage=e=>{if(e.data.room===room){state=e.data.state;localStorage.setItem("skeld_"+room,JSON.stringify(state));render();beep()}};
-function host(){isHost=true;me="Console";room=Math.random().toString(36).slice(2,6).toUpperCase();state=fresh(room);save();openGame()}
-function join(){me=document.querySelector("#name").value.trim();room=document.querySelector("#roomInput").value.trim().toUpperCase();if(!me||room.length<4)return alert("Entre ton prénom et le code à 4 caractères.");load();if(!state.players.includes(me))state.players.push(me);state.log.unshift(me+" a rejoint l’équipage");save();openGame()}
+let room="",me="",isHost=false,state=null,unsub=null;
+function fresh(code){return {code,players:{},done:{0:false,1:false,2:false,3:false,4:false},log:{created:{text:"Partie créée",ts:Date.now()}}}}
+function roomRef(){return ref(db,"rooms/"+room)}
+async function host(){isHost=true;me="Console";room=Math.random().toString(36).slice(2,6).toUpperCase();state=fresh(room);await set(roomRef(),state);listen();openGame()}
+async function join(){me=document.querySelector("#name").value.trim();room=document.querySelector("#roomInput").value.trim().toUpperCase();if(!me||room.length<4)return alert("Entre ton prénom et le code à 4 caractères.");let snap=await get(roomRef());if(!snap.exists())return alert("Cette salle n’existe pas.");await update(ref(db,"rooms/"+room+"/players"),{[safeKey(me)]:me});await addLog(me+" a rejoint l’équipage");listen();openGame()}
+function listen(){if(unsub)unsub();unsub=onValue(roomRef(),snap=>{if(!snap.exists())return;let previous=state;state=snap.val();render();if(previous&&JSON.stringify(previous.done)!==JSON.stringify(state.done)&&isHost){flash("✓ MISSION VALIDÉE !");beep()}})}
+async function addLog(text){let id=Date.now()+"_"+Math.random().toString(36).slice(2,6);await set(ref(db,"rooms/"+room+"/log/"+id),{text,ts:Date.now()})}
+function safeKey(s){return s.replace(/[.#$\[\]\/]/g,"_")}
 function openGame(){document.querySelector("#home").classList.add("hidden");document.querySelector("#game").classList.remove("hidden");document.querySelector("#roomCode").textContent=room;document.querySelector("#hostPanel").classList.toggle("hidden",!isHost);document.querySelector("#playerPanel").classList.toggle("hidden",isHost);document.querySelector("#role").textContent=isHost?"MODE CONSOLE":"CREWMATE";render()}
-function render(){if(!state)return;let n=state.done.filter(Boolean).length,p=Math.round(n/TASKS.length*100);document.querySelector("#pct").textContent=p+"%";document.querySelector("#fill").style.width=p+"%";document.querySelector("#players").innerHTML=state.players.map(x=>'<span class="pill">👨‍🚀 '+esc(x)+'</span>').join("")||'<span class="small">Aucun joueur</span>';let rows=TASKS.map((t,i)=>'<div class="task '+(state.done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><span>'+(state.done[i]?'✅':'⬜')+'</span></div>').join("");document.querySelector("#hostTasks").innerHTML=rows;document.querySelector("#playerTasks").innerHTML=TASKS.map((t,i)=>'<div class="task '+(state.done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><button '+(state.done[i]?'disabled':'')+' onclick="completeTask('+i+')">'+(state.done[i]?'FAIT':'VALIDER')+'</button></div>').join("");document.querySelector("#log").innerHTML=state.log.slice(0,8).map(esc).join("<br>")}
+function render(){if(!state)return;let done=state.done||{},players=Object.values(state.players||{}),logs=Object.values(state.log||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));let n=Object.values(done).filter(Boolean).length,p=Math.round(n/TASKS.length*100);document.querySelector("#pct").textContent=p+"%";document.querySelector("#fill").style.width=p+"%";document.querySelector("#players").innerHTML=players.map(x=>'<span class="pill">👨‍🚀 '+esc(x)+'</span>').join("")||'<span class="small">Aucun joueur</span>';let rows=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><span>'+(done[i]?'✅':'⬜')+'</span></div>').join("");document.querySelector("#hostTasks").innerHTML=rows;document.querySelector("#playerTasks").innerHTML=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><button '+(done[i]?'disabled':'')+' onclick="completeTask('+i+')">'+(done[i]?'FAIT':'VALIDER')+'</button></div>').join("");document.querySelector("#log").innerHTML=logs.slice(0,8).map(x=>esc(x.text||x)).join("<br>")}
 function completeTask(i){if(state.done[i])return;state.done[i]=true;state.log.unshift("✓ "+me+" : "+TASKS[i][0]);save();flash("✓ "+TASKS[i][0]+" — mission validée !");beep()}
 function report(){state.log.unshift("🚨 "+me+" signale un corps !");save();flash("🚨 REPORT ! RÉUNION D’URGENCE");beep(true)}
 function resetGame(){state.done=Array(TASKS.length).fill(false);state.log.unshift("Missions réinitialisées");save()}
 function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.resetGame=resetGame;
 </script></body></html>
