@@ -59,8 +59,11 @@ async function join(){
   const snap=await get(ref(db,"rooms/"+room));
   if(!snap.exists()){status.textContent="❌ Salle "+room+" introuvable. Vérifie le code affiché sur le PC.";return}
   const roomData=snap.val(), maxPlayers=Number(roomData.settings?.playerCount||99), currentPlayers=Object.keys(roomData.players||{}).length;
-  if(!roomData.players?.[safeKey(me)] && currentPlayers>=maxPlayers){status.textContent="❌ La partie est complète ("+maxPlayers+" joueurs).";return}
-  await set(ref(db,"rooms/"+room+"/players/"+safeKey(me)),{name:me,alive:true,role:null});
+  const existing=roomData.players?.[safeKey(me)];
+  if(roomData.started && !existing){status.textContent="❌ La partie a déjà commencé.";return}
+  if(!existing && currentPlayers>=maxPlayers){status.textContent="❌ La partie est complète ("+maxPlayers+" joueurs).";return}
+  if(existing && (typeof existing==="string"?existing:existing.name)!==me){status.textContent="❌ Ce prénom est déjà utilisé.";return}
+  if(!existing) await set(ref(db,"rooms/"+room+"/players/"+safeKey(me)),{name:me,alive:true,role:null});
   await addLog(me+" a rejoint l’équipage");
   state=snap.val();
   localStorage.setItem("skeld_session",JSON.stringify({room,me,isHost:false}));
@@ -110,7 +113,7 @@ function listen(){
 }
 async function addLog(text){let id=Date.now()+"_"+Math.random().toString(36).slice(2,6);await set(ref(db,"rooms/"+room+"/log/"+id),{text,ts:Date.now()})}
 function safeKey(s){return s.replace(/[.#$\[\]\/]/g,"_")}
-function openGame(){document.querySelector("#home").classList.add("hidden");document.querySelector("#game").classList.remove("hidden");document.querySelector("#roomCode").textContent=room;document.querySelector("#hostPanel").classList.toggle("hidden",!isHost);document.querySelector("#playerPanel").classList.toggle("hidden",isHost);document.querySelector("#role").textContent=isHost?"MODE CONSOLE":"CREWMATE";render()}
+function openGame(){document.querySelector("#home").classList.add("hidden");document.querySelector("#game").classList.remove("hidden");document.querySelector("#roomCode").textContent=room;document.querySelector("#hostPanel").classList.toggle("hidden",!isHost);document.querySelector("#playerPanel").classList.toggle("hidden",isHost);document.querySelector("#role").textContent=isHost?"MODE CONSOLE":"JOUEUR";render();if(!isHost&&state?.started&&!localStorage.getItem("skeld_role_seen_"+room))setTimeout(revealMyRole,200)}
 function render(){
  if(!state)return;
  const gs=state.settings||{}, raw=state.players||{};
@@ -148,6 +151,9 @@ function revealMyRole(){
 function hideRole(){document.querySelector("#roleReveal").classList.add("hidden");document.querySelector("#missionArea").classList.remove("hidden");localStorage.setItem("skeld_role_seen_"+room,"1")}
 async function completeTask(i){
  try{
+  const p=state?.players?.[safeKey(me)];
+  if(!state?.started){flash("⏳ La partie n’a pas encore commencé.");return}
+  if(p?.alive===false){flash("👻 Tu es éliminé.");return}
   if(state?.done?.[i])return;
   await set(ref(db,"rooms/"+room+"/done/"+i),true);
   await addLog("✓ "+me+" : "+TASKS[i][0]);
@@ -157,6 +163,9 @@ async function completeTask(i){
 }
 async function report(){
  try{
+  const p=state?.players?.[safeKey(me)];
+  if(!state?.started){flash("⏳ La partie n’a pas encore commencé.");return}
+  if(p?.alive===false){flash("👻 Un joueur éliminé ne peut pas faire REPORT.");return}
   const event={id:Date.now()+"_"+Math.random().toString(36).slice(2,7),by:me,ts:Date.now()};
   await set(ref(db,"rooms/"+room+"/lastReport"),event);
   await addLog("🚨 "+me+" signale un corps !");
@@ -179,6 +188,7 @@ async function closeRoom(){
 function returnHome(message=""){
  if(unsub){unsub();unsub=null}
  localStorage.removeItem("skeld_session");
+ if(room)localStorage.removeItem("skeld_role_seen_"+room);
  closeVictory();closeMeeting();
  room="";me="";isHost=false;state=null;victoryShown=false;
  document.querySelector("#game").classList.add("hidden");
