@@ -37,7 +37,7 @@ const TASKS=[
 let room="",me="",isHost=false,state=null,unsub=null;
 function fresh(code){return {code,players:{},done:{0:false,1:false,2:false,3:false,4:false},log:{created:{text:"Partie créée",ts:Date.now()}}}}
 function roomRef(){return ref(db,"rooms/"+room)}
-async function host(){isHost=true;me="Console";room=Math.random().toString(36).slice(2,6).toUpperCase();state=fresh(room);await set(roomRef(),state);listen();openGame()}
+async function host(){isHost=true;me="Console";room=Math.random().toString(36).slice(2,6).toUpperCase();state=fresh(room);await set(roomRef(),state);localStorage.setItem("skeld_session",JSON.stringify({room,me,isHost:true}));listen();openGame()}
 async function join(){
  const status=document.querySelector("#joinStatus");
  try{
@@ -50,6 +50,7 @@ async function join(){
   await set(ref(db,"rooms/"+room+"/players/"+safeKey(me)),me);
   await addLog(me+" a rejoint l’équipage");
   state=snap.val();
+  localStorage.setItem("skeld_session",JSON.stringify({room,me,isHost:false}));
   listen();
   openGame();
  }catch(e){
@@ -62,11 +63,38 @@ async function addLog(text){let id=Date.now()+"_"+Math.random().toString(36).sli
 function safeKey(s){return s.replace(/[.#$\[\]\/]/g,"_")}
 function openGame(){document.querySelector("#home").classList.add("hidden");document.querySelector("#game").classList.remove("hidden");document.querySelector("#roomCode").textContent=room;document.querySelector("#hostPanel").classList.toggle("hidden",!isHost);document.querySelector("#playerPanel").classList.toggle("hidden",isHost);document.querySelector("#role").textContent=isHost?"MODE CONSOLE":"CREWMATE";render()}
 function render(){if(!state)return;let done=state.done||{},players=Object.values(state.players||{}),logs=Object.values(state.log||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));let n=Object.values(done).filter(Boolean).length,p=Math.round(n/TASKS.length*100);document.querySelector("#pct").textContent=p+"%";document.querySelector("#fill").style.width=p+"%";document.querySelector("#players").innerHTML=players.map(x=>'<span class="pill">👨‍🚀 '+esc(x)+'</span>').join("")||'<span class="small">Aucun joueur</span>';let rows=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><span>'+(done[i]?'✅':'⬜')+'</span></div>').join("");document.querySelector("#hostTasks").innerHTML=rows;document.querySelector("#playerTasks").innerHTML=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><button '+(done[i]?'disabled':'')+' onclick="completeTask('+i+')">'+(done[i]?'FAIT':'VALIDER')+'</button></div>').join("");document.querySelector("#log").innerHTML=logs.slice(0,8).map(x=>esc(x.text||x)).join("<br>")}
-function completeTask(i){if(state.done[i])return;state.done[i]=true;state.log.unshift("✓ "+me+" : "+TASKS[i][0]);save();flash("✓ "+TASKS[i][0]+" — mission validée !");beep()}
-function report(){state.log.unshift("🚨 "+me+" signale un corps !");save();flash("🚨 REPORT ! RÉUNION D’URGENCE");beep(true)}
-function resetGame(){state.done=Array(TASKS.length).fill(false);state.log.unshift("Missions réinitialisées");save()}
+async function completeTask(i){
+ try{
+  if(state?.done?.[i])return;
+  await set(ref(db,"rooms/"+room+"/done/"+i),true);
+  await addLog("✓ "+me+" : "+TASKS[i][0]);
+  flash("✓ "+TASKS[i][0]+" — mission validée !");
+  beep();
+ }catch(e){flash("❌ Validation impossible");console.error(e)}
+}
+async function report(){
+ try{
+  await addLog("🚨 "+me+" signale un corps !");
+  await set(ref(db,"rooms/"+room+"/lastReport"),{by:me,ts:Date.now()});
+  flash("🚨 REPORT ! RÉUNION D’URGENCE");beep(true);
+ }catch(e){flash("❌ REPORT impossible");console.error(e)}
+}
+async function resetGame(){
+ await set(ref(db,"rooms/"+room+"/done"),{0:false,1:false,2:false,3:false,4:false});
+ await addLog("Missions réinitialisées");
+}
 function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
 window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.resetGame=resetGame;
+(async function restoreSession(){
+ try{
+  const s=JSON.parse(localStorage.getItem("skeld_session")||"null");
+  if(!s?.room||!s?.me)return;
+  room=s.room;me=s.me;isHost=!!s.isHost;
+  const snap=await get(roomRef());
+  if(!snap.exists()){localStorage.removeItem("skeld_session");return}
+  state=snap.val();listen();openGame();
+ }catch(e){console.error("RESTORE",e)}
+})();
 </script></body></html>
