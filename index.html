@@ -19,8 +19,8 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div><div id="gameSettings" class="small" style="margin-top:8px"></div></div>
-<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Joueurs connectés</div><div id="players" class="players"></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="primary big" style="width:100%;margin-top:14px" onclick="newGame()">🔄 REFAIRE UNE PARTIE</button></div>
-<div id="playerPanel" class="card hidden"><h2>📱 Mes missions</h2><p class="small">Réalise physiquement la mission, puis valide-la ici.</p><div id="playerTasks"></div><button class="danger big" style="width:100%;margin-top:18px" onclick="report()">🚨 REPORT / CORPS TROUVÉ</button></div>
+<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Joueurs connectés</div><div id="players" class="players"></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="primary big" style="width:100%;margin-top:14px" onclick="newGame()">🔄 REFAIRE UNE PARTIE</button><div class="row" style="margin-top:10px"><button onclick="leaveGame()">↩️ QUITTER LA PARTIE</button><button class="danger" onclick="closeRoom()">⛔ FERMER LE SALON</button></div></div>
+<div id="playerPanel" class="card hidden"><h2>📱 Mes missions</h2><p class="small">Réalise physiquement la mission, puis valide-la ici.</p><div id="playerTasks"></div><button class="danger big" style="width:100%;margin-top:18px" onclick="report()">🚨 REPORT / CORPS TROUVÉ</button><button style="width:100%;margin-top:10px" onclick="leaveGame()">↩️ QUITTER LA PARTIE</button></div>
 <div class="card"><h3>📡 Journal de bord</h3><div id="log" class="small">En attente…</div></div>
 </section></main>
 <script type="module">
@@ -74,7 +74,10 @@ async function join(){
 function listen(){
  if(unsub)unsub();
  unsub=onValue(roomRef(),snap=>{
-  if(!snap.exists())return;
+  if(!snap.exists()){
+   if(state){returnHome("⛔ Le salon a été fermé par la console.");}
+   return;
+  }
   const previous=state;
   state=snap.val();
   render();
@@ -120,6 +123,30 @@ async function report(){
   await addLog("🚨 "+me+" signale un corps !");
  }catch(e){flash("❌ REPORT impossible");console.error(e)}
 }
+async function leaveGame(){
+ try{
+  if(!isHost && room && me) await set(ref(db,"rooms/"+room+"/players/"+safeKey(me)),null);
+ }catch(e){console.error(e)}
+ returnHome("Tu as quitté la partie.");
+}
+async function closeRoom(){
+ if(!isHost)return;
+ if(!confirm("Fermer ce salon pour tous les joueurs ?"))return;
+ try{
+  await set(roomRef(),null);
+  returnHome("Salon fermé.");
+ }catch(e){flash("❌ Impossible de fermer le salon");console.error(e)}
+}
+function returnHome(message=""){
+ if(unsub){unsub();unsub=null}
+ localStorage.removeItem("skeld_session");
+ closeVictory();closeMeeting();
+ room="";me="";isHost=false;state=null;victoryShown=false;
+ document.querySelector("#game").classList.add("hidden");
+ document.querySelector("#home").classList.remove("hidden");
+ document.querySelector("#roomInput").value="";
+ document.querySelector("#joinStatus").textContent=message;
+}
 async function newGame(){
  if(!isHost)return;
  const nextRound=Number(state?.round||1)+1;
@@ -139,7 +166,7 @@ function victorySound(){try{const ctx=new AudioContext();const notes=[523,659,78
 function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.newGame=newGame;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
+window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.newGame=newGame;window.leaveGame=leaveGame;window.closeRoom=closeRoom;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
 (async function restoreSession(){
  try{
   const s=JSON.parse(localStorage.getItem("skeld_session")||"null");
