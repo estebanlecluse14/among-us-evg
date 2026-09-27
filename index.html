@@ -68,9 +68,10 @@ function listen(){
   render();
   const d=state.done||{};
   const completed=Object.values(d).filter(v=>v===true).length;
-  if(isHost){
-   if(previous&&JSON.stringify(previous.done||{})!==JSON.stringify(d)){flash("✓ MISSION VALIDÉE !");beep()}
-   if(completed>=TASKS.length&&!victoryShown){victoryShown=true;setTimeout(showVictory,350)}
+  if(isHost&&previous&&JSON.stringify(previous.done||{})!==JSON.stringify(d)){flash("✓ MISSION VALIDÉE !");beep()}
+  if(completed>=TASKS.length&&!victoryShown){
+   victoryShown=true;
+   setTimeout(showVictory,350);
   }
  })
 }
