@@ -59,7 +59,21 @@ async function join(){
   status.textContent="❌ Connexion impossible : "+(e?.message||"erreur Firebase");
  }
 }
-function listen(){if(unsub)unsub();unsub=onValue(roomRef(),snap=>{if(!snap.exists())return;let previous=state;state=snap.val();render();if(previous&&JSON.stringify(previous.done)!==JSON.stringify(state.done)&&isHost){flash("✓ MISSION VALIDÉE !");beep();const d=state.done||{};if(Object.values(d).filter(Boolean).length>=TASKS.length&&!victoryShown){victoryShown=true;showVictory()}}})}
+function listen(){
+ if(unsub)unsub();
+ unsub=onValue(roomRef(),snap=>{
+  if(!snap.exists())return;
+  const previous=state;
+  state=snap.val();
+  render();
+  const d=state.done||{};
+  const completed=Object.values(d).filter(v=>v===true).length;
+  if(isHost){
+   if(previous&&JSON.stringify(previous.done||{})!==JSON.stringify(d)){flash("✓ MISSION VALIDÉE !");beep()}
+   if(completed>=TASKS.length&&!victoryShown){victoryShown=true;setTimeout(showVictory,350)}
+  }
+ })
+}
 async function addLog(text){let id=Date.now()+"_"+Math.random().toString(36).slice(2,6);await set(ref(db,"rooms/"+room+"/log/"+id),{text,ts:Date.now()})}
 function safeKey(s){return s.replace(/[.#$\[\]\/]/g,"_")}
 function openGame(){document.querySelector("#home").classList.add("hidden");document.querySelector("#game").classList.remove("hidden");document.querySelector("#roomCode").textContent=room;document.querySelector("#hostPanel").classList.toggle("hidden",!isHost);document.querySelector("#playerPanel").classList.toggle("hidden",isHost);document.querySelector("#role").textContent=isHost?"MODE CONSOLE":"CREWMATE";render()}
