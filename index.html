@@ -8,7 +8,7 @@
 .card{background:#111e29e8;border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 12px 40px #0005}
 .row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}button,input{font:inherit;border-radius:12px;padding:14px;border:1px solid var(--line)}
 input{background:#09131c;color:white;width:100%}button{background:#173144;color:white;font-weight:800;cursor:pointer}button.primary{background:var(--cyan);color:#041018;border:0}button.danger{background:#4b1720;border-color:#8d2d38}
-.hidden{display:none}.code{font-size:42px;font-weight:900;letter-spacing:.18em;color:var(--cyan);text-align:center}.players{display:flex;gap:8px;flex-wrap:wrap}.pill{padding:8px 12px;border-radius:999px;background:#0a1720;border:1px solid var(--line)}
+.hidden{display:none}.code{font-size:42px;font-weight:900;letter-spacing:.18em;color:var(--cyan);text-align:center}.players{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.playercard{padding:14px;border-radius:14px;background:#0a1720;border:1px solid var(--line);text-align:center;font-weight:800}.playercard.dead{opacity:.5;filter:grayscale(1)}.playercard .status{display:block;font-size:12px;margin-top:5px;color:var(--green)}.playercard.dead .status{color:var(--red)}.pill{padding:8px 12px;border-radius:999px;background:#0a1720;border:1px solid var(--line)}
 .bar{height:22px;background:#071019;border:1px solid var(--line);border-radius:99px;overflow:hidden}.fill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--green));transition:.4s}
 .task{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:13px 0;border-bottom:1px solid #243744}.task:last-child{border:0}.task.done{opacity:.55}.task.done b{text-decoration:line-through}
 .small{color:var(--muted);font-size:14px}.alert{position:fixed;inset:16px 16px auto;max-width:650px;margin:auto;background:#103d2b;border:2px solid var(--green);padding:18px;border-radius:16px;text-align:center;font-weight:900;z-index:10;transform:translateY(-160%);transition:.35s}.alert.show{transform:translateY(0)}
@@ -19,8 +19,8 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div><div id="gameSettings" class="small" style="margin-top:8px"></div></div>
-<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Joueurs connectés</div><div id="players" class="players"></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="primary big" style="width:100%;margin-top:14px" onclick="newGame()">🔄 TERMINER ET REFAIRE UNE PARTIE</button><div class="row" style="margin-top:10px"><button onclick="leaveGame()">↩️ QUITTER LA PARTIE</button><button class="danger" onclick="closeRoom()">⛔ FERMER LE SALON</button></div></div>
-<div id="playerPanel" class="card hidden"><h2>📱 Mes missions</h2><p class="small">Réalise physiquement la mission, puis valide-la ici.</p><div id="playerTasks"></div><button class="danger big" style="width:100%;margin-top:18px" onclick="report()">🚨 REPORT / CORPS TROUVÉ</button><button style="width:100%;margin-top:10px" onclick="leaveGame()">↩️ QUITTER LA PARTIE</button></div>
+<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Équipage</div><h3 id="aliveCount">0 survivant</h3><div id="players" class="players"></div><button id="startBtn" class="primary big" style="width:100%;margin-top:14px" onclick="startGame()">🚀 LANCER LA PARTIE</button><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="primary big" style="width:100%;margin-top:14px" onclick="newGame()">🔄 TERMINER ET REFAIRE UNE PARTIE</button><div class="row" style="margin-top:10px"><button onclick="leaveGame()">↩️ QUITTER LA PARTIE</button><button class="danger" onclick="closeRoom()">⛔ FERMER LE SALON</button></div></div>
+<div id="playerPanel" class="card hidden"><div id="roleReveal" class="hidden center"><div id="secretRole" style="font-size:34px;font-weight:900;margin:18px 0"></div><p id="roleHelp"></p><button class="primary big" onclick="hideRole()">J’AI COMPRIS — CACHER MON RÔLE</button></div><div id="missionArea"><h2>📱 Mes missions</h2><p class="small">Réalise physiquement la mission, puis valide-la ici.</p><div id="playerTasks"></div><button class="danger big" style="width:100%;margin-top:18px" onclick="report()">🚨 REPORT / CORPS TROUVÉ</button><button style="width:100%;margin-top:10px" onclick="leaveGame()">↩️ QUITTER LA PARTIE</button></div></div>
 <div class="card"><h3>📡 Journal de bord</h3><div id="log" class="small">En attente…</div></div>
 </section></main>
 <script type="module">
@@ -60,7 +60,7 @@ async function join(){
   if(!snap.exists()){status.textContent="❌ Salle "+room+" introuvable. Vérifie le code affiché sur le PC.";return}
   const roomData=snap.val(), maxPlayers=Number(roomData.settings?.playerCount||99), currentPlayers=Object.keys(roomData.players||{}).length;
   if(!roomData.players?.[safeKey(me)] && currentPlayers>=maxPlayers){status.textContent="❌ La partie est complète ("+maxPlayers+" joueurs).";return}
-  await set(ref(db,"rooms/"+room+"/players/"+safeKey(me)),me);
+  await set(ref(db,"rooms/"+room+"/players/"+safeKey(me)),{name:me,alive:true,role:null});
   await addLog(me+" a rejoint l’équipage");
   state=snap.val();
   localStorage.setItem("skeld_session",JSON.stringify({room,me,isHost:false}));
@@ -80,6 +80,7 @@ function listen(){
   }
   const previous=state;
   state=snap.val();
+  if(!isHost && state?.started && !previous?.started && !localStorage.getItem("skeld_role_seen_"+room)){setTimeout(revealMyRole,250)}
   if(state?.ended){
     returnHome(state.ended.reason==="rematch"?"🔄 La partie est terminée. Rejoins le nouveau salon pour la revanche !":"⛔ La partie est terminée.");
     return;
@@ -110,7 +111,41 @@ function listen(){
 async function addLog(text){let id=Date.now()+"_"+Math.random().toString(36).slice(2,6);await set(ref(db,"rooms/"+room+"/log/"+id),{text,ts:Date.now()})}
 function safeKey(s){return s.replace(/[.#$\[\]\/]/g,"_")}
 function openGame(){document.querySelector("#home").classList.add("hidden");document.querySelector("#game").classList.remove("hidden");document.querySelector("#roomCode").textContent=room;document.querySelector("#hostPanel").classList.toggle("hidden",!isHost);document.querySelector("#playerPanel").classList.toggle("hidden",isHost);document.querySelector("#role").textContent=isHost?"MODE CONSOLE":"CREWMATE";render()}
-function render(){if(!state)return;const gs=state.settings||{};document.querySelector("#gameSettings").textContent=(gs.playerCount||"?")+" joueurs • "+(gs.impostorCount||"?")+" imposteur"+((gs.impostorCount||0)>1?"s":"")+" prévu"+((gs.impostorCount||0)>1?"s":"");let done=state.done||{},players=Object.values(state.players||{}),logs=Object.values(state.log||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));let n=Object.values(done).filter(Boolean).length,p=Math.round(n/TASKS.length*100);document.querySelector("#pct").textContent=p+"%";document.querySelector("#fill").style.width=p+"%";document.querySelector("#players").innerHTML=players.map(x=>'<span class="pill">👨‍🚀 '+esc(x)+'</span>').join("")||'<span class="small">Aucun joueur</span>';let rows=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><span>'+(done[i]?'✅':'⬜')+'</span></div>').join("");document.querySelector("#hostTasks").innerHTML=rows;document.querySelector("#playerTasks").innerHTML=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><button '+(done[i]?'disabled':'')+' onclick="completeTask('+i+')">'+(done[i]?'FAIT':'VALIDER')+'</button></div>').join("");document.querySelector("#log").innerHTML=logs.slice(0,8).map(x=>esc(x.text||x)).join("<br>")}
+function render(){
+ if(!state)return;
+ const gs=state.settings||{}, raw=state.players||{};
+ const entries=Object.entries(raw).map(([k,v])=>[k,typeof v==="string"?{name:v,alive:true,role:null}:v]);
+ const alive=entries.filter(([,v])=>v.alive!==false).length;
+ document.querySelector("#gameSettings").textContent=(gs.playerCount||"?")+" joueurs • "+(gs.impostorCount||"?")+" imposteur"+((gs.impostorCount||0)>1?"s":"")+" prévu"+((gs.impostorCount||0)>1?"s":"");
+ document.querySelector("#aliveCount").textContent=alive+" survivant"+(alive!==1?"s":"")+" / "+entries.length;
+ document.querySelector("#players").innerHTML=entries.map(([,v])=>'<div class="playercard '+(v.alive===false?'dead':'')+'">'+(v.alive===false?'💀 ':'👨‍🚀 ')+esc(v.name)+'<span class="status">'+(v.alive===false?'MORT':'EN VIE')+'</span></div>').join("")||'<span class="small">Aucun joueur</span>';
+ const start=document.querySelector("#startBtn");if(start)start.classList.toggle("hidden",!!state.started);
+ let done=state.done||{},logs=Object.values(state.log||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
+ let n=Object.values(done).filter(Boolean).length,p=Math.round(n/TASKS.length*100);
+ document.querySelector("#pct").textContent=p+"%";document.querySelector("#fill").style.width=p+"%";
+ let rows=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><span>'+(done[i]?'✅':'⬜')+'</span></div>').join("");
+ document.querySelector("#hostTasks").innerHTML=rows;
+ document.querySelector("#playerTasks").innerHTML=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><button '+(done[i]?'disabled':'')+' onclick="completeTask('+i+')">'+(done[i]?'FAIT':'VALIDER')+'</button></div>').join("");
+ document.querySelector("#log").innerHTML=logs.slice(0,8).map(x=>esc(x.text||x)).join("<br>");
+}
+async function startGame(){
+ if(!isHost||state?.started)return;
+ const raw=state.players||{}, keys=Object.keys(raw), wanted=Number(state.settings?.playerCount||0);
+ if(keys.length!==wanted){flash("⚠️ Il faut "+wanted+" joueurs connectés ("+keys.length+"/"+wanted+")");return}
+ const shuffled=[...keys].sort(()=>Math.random()-.5), impCount=Number(state.settings?.impostorCount||1);
+ const updates={started:true,startedAt:Date.now()};
+ keys.forEach(k=>{const v=typeof raw[k]==="string"?{name:raw[k]}:raw[k];updates["players/"+k]={name:v.name,alive:true,role:shuffled.slice(0,impCount).includes(k)?"impostor":"crewmate"}});
+ await update(roomRef(),updates);await addLog("🚀 La partie commence !");
+}
+function revealMyRole(){
+ if(isHost||!state?.started)return;
+ const p=state.players?.[safeKey(me)];if(!p?.role)return;
+ const box=document.querySelector("#roleReveal"),area=document.querySelector("#missionArea");
+ box.classList.remove("hidden");area.classList.add("hidden");
+ document.querySelector("#secretRole").textContent=p.role==="impostor"?"🔴 IMPOSTEUR":"🔵 CREWMATE";
+ document.querySelector("#roleHelp").textContent=p.role==="impostor"?"Sabote discrètement et ne te fais pas démasquer.":"Accomplis les missions et démasque les imposteurs.";
+}
+function hideRole(){document.querySelector("#roleReveal").classList.add("hidden");document.querySelector("#missionArea").classList.remove("hidden");localStorage.setItem("skeld_role_seen_"+room,"1")}
 async function completeTask(i){
  try{
   if(state?.done?.[i])return;
@@ -168,7 +203,7 @@ function victorySound(){try{const ctx=new AudioContext();const notes=[523,659,78
 function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-window.host=host;window.join=join;window.completeTask=completeTask;window.report=report;window.newGame=newGame;window.leaveGame=leaveGame;window.closeRoom=closeRoom;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
+window.host=host;window.join=join;window.startGame=startGame;window.revealMyRole=revealMyRole;window.hideRole=hideRole;window.completeTask=completeTask;window.report=report;window.newGame=newGame;window.leaveGame=leaveGame;window.closeRoom=closeRoom;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
 (async function restoreSession(){
  try{
   const s=JSON.parse(localStorage.getItem("skeld_session")||"null");
