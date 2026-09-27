@@ -15,7 +15,7 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 .big{font-size:20px;padding:18px}.center{text-align:center}.tag{color:var(--green);font-weight:800}
 </style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><main class="wrap">
 <div class="brand"><h1>THE SKELD</h1><p>MISSION CONTROL // EVG</p></div>
-<section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><button class="big" style="width:100%" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
+<section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><button class="big" style="width:100%" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div></div>
 <div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Joueurs connectés</div><div id="players" class="players"></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="danger" onclick="resetGame()">Réinitialiser les missions</button></div>
@@ -38,7 +38,25 @@ let room="",me="",isHost=false,state=null,unsub=null;
 function fresh(code){return {code,players:{},done:{0:false,1:false,2:false,3:false,4:false},log:{created:{text:"Partie créée",ts:Date.now()}}}}
 function roomRef(){return ref(db,"rooms/"+room)}
 async function host(){isHost=true;me="Console";room=Math.random().toString(36).slice(2,6).toUpperCase();state=fresh(room);await set(roomRef(),state);listen();openGame()}
-async function join(){me=document.querySelector("#name").value.trim();room=document.querySelector("#roomInput").value.trim().toUpperCase();if(!me||room.length<4)return alert("Entre ton prénom et le code à 4 caractères.");let snap=await get(roomRef());if(!snap.exists())return alert("Cette salle n’existe pas.");await update(ref(db,"rooms/"+room+"/players"),{[safeKey(me)]:me});await addLog(me+" a rejoint l’équipage");listen();openGame()}
+async function join(){
+ const status=document.querySelector("#joinStatus");
+ try{
+  me=document.querySelector("#name").value.trim();
+  room=document.querySelector("#roomInput").value.trim().toUpperCase().replace(/\s/g,"");
+  if(!me||room.length!==4){status.textContent="⚠️ Entre ton prénom et le code de salle à 4 caractères.";return}
+  status.textContent="Connexion à la salle "+room+"…";
+  const snap=await get(ref(db,"rooms/"+room));
+  if(!snap.exists()){status.textContent="❌ Salle "+room+" introuvable. Vérifie le code affiché sur le PC.";return}
+  await set(ref(db,"rooms/"+room+"/players/"+safeKey(me)),me);
+  await addLog(me+" a rejoint l’équipage");
+  state=snap.val();
+  listen();
+  openGame();
+ }catch(e){
+  console.error("JOIN ERROR",e);
+  status.textContent="❌ Connexion impossible : "+(e?.message||"erreur Firebase");
+ }
+}
 function listen(){if(unsub)unsub();unsub=onValue(roomRef(),snap=>{if(!snap.exists())return;let previous=state;state=snap.val();render();if(previous&&JSON.stringify(previous.done)!==JSON.stringify(state.done)&&isHost){flash("✓ MISSION VALIDÉE !");beep()}})}
 async function addLog(text){let id=Date.now()+"_"+Math.random().toString(36).slice(2,6);await set(ref(db,"rooms/"+room+"/log/"+id),{text,ts:Date.now()})}
 function safeKey(s){return s.replace(/[.#$\[\]\/]/g,"_")}
