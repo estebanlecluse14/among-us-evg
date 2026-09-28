@@ -29,11 +29,11 @@ import { getDatabase, ref, set, get, update, onValue } from "https://www.gstatic
 const firebaseConfig={apiKey:"AIzaSyAyJ2EBHU9bB8XJGIUQE15cAoflIWXjT2g",authDomain:"among-us-evg-bc433.firebaseapp.com",databaseURL:"https://among-us-evg-bc433-default-rtdb.europe-west1.firebasedatabase.app",projectId:"among-us-evg-bc433",storageBucket:"among-us-evg-bc433.firebasestorage.app",messagingSenderId:"643537336835",appId:"1:643537336835:web:7ba199528421cdb6cc2c36"};
 const app=initializeApp(firebaseConfig); const db=getDatabase(app);
 const TASKS=[
-["Pyramide de gobelets","Construis la pyramide de gobelets."],
-["Électricité","Relie correctement les fils électriques."],
-["O2","Déplace le ballon uniquement avec ton souffle."],
-["Salle de sport","Franchis les obstacles sur 10 mètres."],
-["Chambre / Bazar","Range les affaires de la zone prévue."]
+["Pyramide de gobelets","Construis correctement la pyramide de gobelets."],
+["Électricité","Fais passer le câble dans le labyrinthe en relief, du point A au point B."],
+["O2","Gonfle les 6 ballons aux bonnes tailles pour qu’ils correspondent aux 6 emplacements."],
+["MedBay / Infirmerie","Réussis l’épreuve du Docteur Maboul."],
+["Remettez le Commandant Mathieu à l’endroit !","Reconstitue les 3 puzzles du Commandant Mathieu."]
 ];
 let room="",me="",isHost=false,state=null,unsub=null,victoryShown=false;
 function fresh(code,playerCount=8,impostorCount=2){return {code,settings:{playerCount,impostorCount},round:1,players:{},done:{0:false,1:false,2:false,3:false,4:false},log:{created:{text:"Partie créée",ts:Date.now()}}}}
