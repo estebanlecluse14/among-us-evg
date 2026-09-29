@@ -19,7 +19,7 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div><div id="gameSettings" class="small" style="margin-top:8px"></div></div>
-<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Équipage</div><h3 id="aliveCount">0 survivant</h3><div id="players" class="players"></div><button id="startBtn" class="primary big" style="width:100%;margin-top:14px" onclick="startGame()">🚀 LANCER LA PARTIE</button><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="primary big" style="width:100%;margin-top:14px" onclick="newGame()">🔄 TERMINER ET REFAIRE UNE PARTIE</button><div class="row" style="margin-top:10px"><button onclick="leaveGame()">↩️ QUITTER LA PARTIE</button><button class="danger" onclick="closeRoom()">⛔ FERMER LE SALON</button></div></div>
+<div id="hostPanel" class="card hidden"><h2>🖥️ Console centrale</h2><div class="small">Équipage</div><h3 id="aliveCount">0 survivant</h3><div id="players" class="players"></div><button id="startBtn" class="primary big" style="width:100%;margin-top:14px" onclick="startGame()">🚀 LANCER LA PARTIE</button><div id="devPanel" style="margin-top:14px;padding:14px;border:1px dashed #8ca5b5;border-radius:14px"><b>🛠️ MODE DÉVELOPPEUR</b><div class="small">Permet de tester seul. Les joueurs TEST sont supprimables en un clic.</div><div class="row" style="margin-top:10px"><button onclick="devFillPlayers()">🤖 REMPLIR AVEC DES JOUEURS TEST</button><button onclick="devClearPlayers()">🧹 SUPPRIMER LES TESTS</button></div><div id="devActions" class="hidden" style="margin-top:10px"><div class="row"><button onclick="devMission()">✅ MISSION SUIVANTE</button><button onclick="devReport()">🚨 SIMULER REPORT</button></div><div id="devRoles" class="small" style="margin-top:10px"></div></div></div><h3>Progression équipage <span id="pct">0%</span></h3><div class="bar"><div id="fill" class="fill"></div></div><div id="hostTasks"></div><button class="primary big" style="width:100%;margin-top:14px" onclick="newGame()">🔄 TERMINER ET REFAIRE UNE PARTIE</button><div class="row" style="margin-top:10px"><button onclick="leaveGame()">↩️ QUITTER LA PARTIE</button><button class="danger" onclick="closeRoom()">⛔ FERMER LE SALON</button></div></div>
 <div id="playerPanel" class="card hidden"><div id="roleReveal" class="hidden center"><div id="secretRole" style="font-size:34px;font-weight:900;margin:18px 0"></div><p id="roleHelp"></p><button class="primary big" onclick="hideRole()">J’AI COMPRIS — CACHER MON RÔLE</button></div><div id="missionArea"><h2>📱 Mes missions</h2><p class="small">Réalise physiquement la mission, puis valide-la ici.</p><div id="playerTasks"></div><button class="danger big" style="width:100%;margin-top:18px" onclick="report()">🚨 REPORT / CORPS TROUVÉ</button><button style="width:100%;margin-top:10px" onclick="leaveGame()">↩️ QUITTER LA PARTIE</button></div></div>
 <div class="card"><h3>📡 Journal de bord</h3><div id="log" class="small">En attente…</div></div>
 </section></main>
@@ -122,7 +122,7 @@ function render(){
  document.querySelector("#gameSettings").textContent=(gs.playerCount||"?")+" joueurs • "+(gs.impostorCount||"?")+" imposteur"+((gs.impostorCount||0)>1?"s":"")+" prévu"+((gs.impostorCount||0)>1?"s":"");
  document.querySelector("#aliveCount").textContent=alive+" survivant"+(alive!==1?"s":"")+" / "+entries.length;
  document.querySelector("#players").innerHTML=entries.map(([,v])=>'<div class="playercard '+(v.alive===false?'dead':'')+'">'+(v.alive===false?'💀 ':'👨‍🚀 ')+esc(v.name)+'<span class="status">'+(v.alive===false?'MORT':'EN VIE')+'</span></div>').join("")||'<span class="small">Aucun joueur</span>';
- const start=document.querySelector("#startBtn");if(start)start.classList.toggle("hidden",!!state.started);
+ const start=document.querySelector("#startBtn");if(start)start.classList.toggle("hidden",!!state.started); const da=document.querySelector("#devActions");if(da)da.classList.toggle("hidden",!state.started); const dr=document.querySelector("#devRoles");if(dr)dr.textContent=state.started?"TEST rôles : "+entries.map(([,v])=>v.name+" = "+(v.role==="impostor"?"IMPOSTEUR":"CREWMATE")).join(" • "):"";
  let done=state.done||{},logs=Object.values(state.log||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
  let n=Object.values(done).filter(Boolean).length,p=Math.round(n/TASKS.length*100);
  document.querySelector("#pct").textContent=p+"%";document.querySelector("#fill").style.width=p+"%";
@@ -130,6 +130,26 @@ function render(){
  document.querySelector("#hostTasks").innerHTML=rows;
  document.querySelector("#playerTasks").innerHTML=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><button '+(done[i]?'disabled':'')+' onclick="completeTask('+i+')">'+(done[i]?'FAIT':'VALIDER')+'</button></div>').join("");
  document.querySelector("#log").innerHTML=logs.slice(0,8).map(x=>esc(x.text||x)).join("<br>");
+}
+async function devFillPlayers(){
+ if(!isHost||state?.started)return;
+ const wanted=Number(state?.settings?.playerCount||6), raw=state?.players||{}, current=Object.keys(raw).length;
+ if(current>=wanted){flash("ℹ️ Le salon est déjà complet.");return}
+ const updates={};
+ for(let i=current+1;i<=wanted;i++){let name="TEST "+i,key=safeKey(name);while(raw[key]||updates["players/"+key]){name+="X";key=safeKey(name)}updates["players/"+key]={name,alive:true,role:null,test:true}}
+ await update(roomRef(),updates);await addLog("🛠️ Joueurs TEST ajoutés");flash("🤖 Salon rempli pour le test !");
+}
+async function devClearPlayers(){
+ if(!isHost)return;const raw=state?.players||{},updates={};let n=0;
+ Object.entries(raw).forEach(([k,v])=>{if(typeof v!=="string"&&v.test){updates["players/"+k]=null;n++}});
+ if(!n){flash("ℹ️ Aucun joueur TEST.");return}await update(roomRef(),updates);flash("🧹 Joueurs TEST supprimés");
+}
+async function devMission(){
+ if(!isHost||!state?.started)return;const d=state.done||{};const i=TASKS.findIndex((_,x)=>!d[x]);
+ if(i<0){flash("✅ Toutes les missions sont déjà terminées.");return}await set(ref(db,"rooms/"+room+"/done/"+i),true);await addLog("🛠️ TEST : "+TASKS[i][0]);
+}
+async function devReport(){
+ if(!isHost||!state?.started)return;const event={id:Date.now()+"_dev",by:"JOUEUR TEST",ts:Date.now()};await set(ref(db,"rooms/"+room+"/lastReport"),event);await addLog("🛠️ TEST : REPORT simulé");
 }
 async function startGame(){
  if(!isHost||state?.started)return;
@@ -213,7 +233,7 @@ function victorySound(){try{const ctx=new AudioContext();const notes=[523,659,78
 function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-window.host=host;window.join=join;window.startGame=startGame;window.revealMyRole=revealMyRole;window.hideRole=hideRole;window.completeTask=completeTask;window.report=report;window.newGame=newGame;window.leaveGame=leaveGame;window.closeRoom=closeRoom;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
+window.host=host;window.join=join;window.devFillPlayers=devFillPlayers;window.devClearPlayers=devClearPlayers;window.devMission=devMission;window.devReport=devReport;window.startGame=startGame;window.revealMyRole=revealMyRole;window.hideRole=hideRole;window.completeTask=completeTask;window.report=report;window.newGame=newGame;window.leaveGame=leaveGame;window.closeRoom=closeRoom;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
 (async function restoreSession(){
  try{
   const s=JSON.parse(localStorage.getItem("skeld_session")||"null");
