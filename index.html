@@ -14,8 +14,8 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 .small{color:var(--muted);font-size:14px}.alert{position:fixed;inset:16px 16px auto;max-width:650px;margin:auto;background:#103d2b;border:2px solid var(--green);padding:18px;border-radius:16px;text-align:center;font-weight:900;z-index:10;transform:translateY(-160%);transition:.35s}.alert.show{transform:translateY(0)}
 .big{font-size:20px;padding:18px}.center{text-align:center}.tag{color:var(--green);font-weight:800}
  .victory{position:fixed;inset:0;background:radial-gradient(circle,#174d3a,#050b10 70%);z-index:100;display:none;align-items:center;justify-content:center;text-align:center;padding:25px}.victory.show{display:flex}.victory h1{font-size:clamp(42px,10vw,100px);margin:0;color:var(--green);text-shadow:0 0 35px #58e38c88}.victory p{font-size:clamp(18px,4vw,32px)}.victory .ship{font-size:80px;animation:win 1s ease-in-out infinite alternate}.meeting{background:radial-gradient(circle,#5a1118,#080506 72%)}.meeting h1{color:var(--red);text-shadow:0 0 35px #ff596488}.meeting .tag{color:#ffd3d6}@keyframes win{to{transform:translateY(-18px) scale(1.08)}}
-</style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><div id="meeting" class="victory meeting"><div style="width:min(680px,100%)"><div class="ship">🚨</div><h1>RÉUNION D’URGENCE</h1><p id="meetingText">UN CORPS A ÉTÉ SIGNALÉ</p><div id="voteStatus" class="tag">DISCUTEZ, PUIS VOTEZ</div><div id="voteChoices" class="players" style="margin-top:18px"></div><div id="voteResult" style="font-size:22px;font-weight:900;margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeMeeting()">FERMER</button></div></div><div id="reportPicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">💀</div><h1>CORPS TROUVÉ</h1><p>Quel joueur as-tu trouvé mort ?</p><div id="reportChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeReportPicker()">ANNULER</button></div></div><main class="wrap">
-<div class="brand"><h1>LE AMONG US DE NOOPIX</h1><p>MISSION CONTROL // EVG</p><div class="small" style="margin-top:8px">VERSION 0.24 • MISE À JOUR : 04/10/2026</div></div>
+</style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><div id="impostorsDefeated" class="victory"><div><div class="ship">👨‍🚀</div><h1>VICTOIRE !</h1><p>TOUS LES IMPOSTEURS SONT ÉLIMINÉS</p><div class="tag">VICTOIRE DES CREWMATES</div><button class="big" style="margin-top:30px" onclick="closeImpostorsDefeated()">FERMER</button></div></div><div id="meeting" class="victory meeting"><div style="width:min(680px,100%)"><div class="ship">🚨</div><h1>RÉUNION D’URGENCE</h1><p id="meetingText">UN CORPS A ÉTÉ SIGNALÉ</p><div id="voteStatus" class="tag">DISCUTEZ, PUIS VOTEZ</div><div id="voteChoices" class="players" style="margin-top:18px"></div><div id="voteResult" style="font-size:22px;font-weight:900;margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeMeeting()">FERMER</button></div></div><div id="reportPicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">💀</div><h1>CORPS TROUVÉ</h1><p>Quel joueur as-tu trouvé mort ?</p><div id="reportChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeReportPicker()">ANNULER</button></div></div><main class="wrap">
+<div class="brand"><h1>LE AMONG US DE NOOPIX</h1><p>MISSION CONTROL // EVG</p><div class="small" style="margin-top:8px">VERSION 0.25 • MISE À JOUR : 04/10/2026</div></div>
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div><div id="gameSettings" class="small" style="margin-top:8px"></div></div>
@@ -35,7 +35,7 @@ const TASKS=[
 ["MedBay / Infirmerie","Réussis l’épreuve du Docteur Maboul."],
 ["Course de l’œuf","Fais le tour complet du terrain avec une cuillère et un œuf, sans faire tomber l’œuf."]
 ];
-let room="",me="",isHost=false,state=null,unsub=null,victoryShown=false;
+let room="",me="",isHost=false,state=null,unsub=null,victoryShown=false,impostorVictoryShown=false;
 function fresh(code,playerCount=8,impostorCount=2){return {code,settings:{playerCount,impostorCount},round:1,players:{},done:{0:false,1:false,2:false,3:false,4:false},log:{created:{text:"Partie créée",ts:Date.now()}}}}
 function roomRef(){return ref(db,"rooms/"+room)}
 async function host(){
@@ -97,6 +97,15 @@ function listen(){
   if(completed<TASKS.length) victoryShown=false;
   if(isHost&&previous&&JSON.stringify(previous.done||{})!==JSON.stringify(d)){flash("✓ MISSION VALIDÉE !");beep()}
   if(completed>=TASKS.length&&!victoryShown){victoryShown=true;setTimeout(showVictory,250)}
+  if(state?.started){
+    const roster=Object.values(state.players||{}).filter(v=>typeof v!=="string");
+    const impostors=roster.filter(v=>v.role==="impostor");
+    const livingImpostors=impostors.filter(v=>v.alive!==false);
+    if(impostors.length>0&&livingImpostors.length===0&&!impostorVictoryShown){
+      impostorVictoryShown=true;
+      setTimeout(showImpostorsDefeated,300);
+    }
+  }
 
   const oldSabotage=previous?.lastSabotage?.id||null;
   const newSabotage=state?.lastSabotage?.id||null;
@@ -116,8 +125,8 @@ function listen(){
   if(previous&&newMeetingResult&&newMeetingResult!==oldMeetingResult){showMeeting(state.lastReport?.by||"Un joueur");renderMeeting();beep(true)}
 
   if(previous && (state.round||1)!==(previous.round||1)){
-    victoryShown=false;
-    closeVictory();
+    victoryShown=false;impostorVictoryShown=false;
+    closeVictory();closeImpostorsDefeated();
     closeMeeting();
     flash("🔄 Nouvelle partie — missions remises à zéro !");
   }
@@ -272,7 +281,7 @@ function returnHome(message=""){
  localStorage.removeItem("skeld_session");
  if(room)localStorage.removeItem("skeld_role_seen_"+room);
  closeVictory();closeMeeting();
- room="";me="";isHost=false;state=null;victoryShown=false;
+ room="";me="";isHost=false;state=null;victoryShown=false;impostorVictoryShown=false;
  document.querySelector("#game").classList.add("hidden");
  document.querySelector("#home").classList.remove("hidden");
  document.querySelector("#roomInput").value="";
@@ -288,6 +297,8 @@ async function newGame(){
  }catch(e){flash("❌ Impossible de terminer la partie");console.error(e)}
 }
 function showVictory(){document.querySelector("#victory").classList.add("show");victorySound();try{navigator.vibrate?.([200,100,200])}catch{}}
+function showImpostorsDefeated(){document.querySelector("#impostorsDefeated").classList.add("show");victorySound();try{navigator.vibrate?.([250,100,250,100,500])}catch{}}
+function closeImpostorsDefeated(){document.querySelector("#impostorsDefeated").classList.remove("show")}
 function showMeeting(by){const acc=state?.meeting?.accusation,b=state?.meeting?.body||state?.lastReport;document.querySelector("#meetingText").textContent=acc?"📢 "+by+" ACCUSE "+acc.name+" D’ÊTRE LE TUEUR":(b?.victimName||b?.name?"💀 "+(b.victimName||b.name)+" EST MORT — "+((b.victimRole||b.role)==="impostor"?"🔴 IMPOSTEUR":"🔵 CREWMATE")+" • signalé par "+by:"🚨 "+by+" A SIGNALÉ UN CORPS");document.querySelector("#meeting").classList.add("show");renderMeeting();reportSound();try{navigator.vibrate?.([300,120,300,120,500])}catch{}}
 function renderMeeting(){
  const box=document.querySelector("#voteChoices"),status=document.querySelector("#voteStatus"),result=document.querySelector("#voteResult");if(!box||!state?.meeting)return;
@@ -334,7 +345,7 @@ function victorySound(){try{const ctx=new AudioContext();const notes=[523,659,78
 function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-window.host=host;window.join=join;window.devFillPlayers=devFillPlayers;window.devClearPlayers=devClearPlayers;window.devMission=devMission;window.devReport=devReport;window.startGame=startGame;window.revealMyRole=revealMyRole;window.hideRole=hideRole;window.completeTask=completeTask;window.sabotageTask=sabotageTask;window.report=report;window.reportKiller=reportKiller;window.confirmKillerReport=confirmKillerReport;window.confirmReport=confirmReport;window.closeReportPicker=closeReportPicker;window.castVote=castVote;window.newGame=newGame;window.leaveGame=leaveGame;window.closeRoom=closeRoom;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
+window.host=host;window.join=join;window.devFillPlayers=devFillPlayers;window.devClearPlayers=devClearPlayers;window.devMission=devMission;window.devReport=devReport;window.startGame=startGame;window.revealMyRole=revealMyRole;window.hideRole=hideRole;window.completeTask=completeTask;window.sabotageTask=sabotageTask;window.report=report;window.reportKiller=reportKiller;window.confirmKillerReport=confirmKillerReport;window.confirmReport=confirmReport;window.closeReportPicker=closeReportPicker;window.castVote=castVote;window.newGame=newGame;window.leaveGame=leaveGame;window.closeRoom=closeRoom;window.closeVictory=closeVictory;window.closeImpostorsDefeated=closeImpostorsDefeated;window.closeMeeting=closeMeeting;
 (async function restoreSession(){
  try{
   const s=JSON.parse(localStorage.getItem("skeld_session")||"null");
