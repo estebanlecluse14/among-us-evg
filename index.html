@@ -23,9 +23,38 @@ body{overflow-y:auto!important}
   main.wrap{height:auto!important;min-height:100vh;overflow:visible!important;padding-bottom:80px}
   #hostPanel{overflow:visible!important;max-height:none!important}
 }
+
+/* v0.46 — MURDER Halloween theme */
+body.murder-theme{
+ --bg:#09050d;--card:#160d1c;--line:#5d263c;--cyan:#ff8a24;--green:#d7ff64;--red:#ff334f;--txt:#fff4e8;--muted:#c3a5b2;
+ background:
+  radial-gradient(circle at 15% 8%,#7b260f55,transparent 25%),
+  radial-gradient(circle at 85% 15%,#5d0b2855,transparent 30%),
+  linear-gradient(#100713,#050307 72%);
+}
+body.murder-theme:before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.22;background-image:radial-gradient(circle,#ff7a1a 1px,transparent 1px);background-size:34px 34px}
+body.murder-theme .brand h1{font-family:Georgia,serif;color:#ff8a24;text-shadow:0 0 12px #ff6a00,0 0 38px #9b1700;letter-spacing:.04em}
+body.murder-theme .brand h1:after{content:"  🎃";font-size:.65em}
+body.murder-theme .brand p{color:#ffb05d}
+body.murder-theme .card{background:linear-gradient(145deg,#1b0d1eeF,#0e0913ee);border-color:#68263e;box-shadow:0 12px 42px #000a,0 0 20px #8d260822}
+body.murder-theme .code{color:#ff922f;text-shadow:0 0 18px #ff5a0088}
+body.murder-theme button{background:#291329;border-color:#73304a}
+body.murder-theme button.primary{background:linear-gradient(135deg,#ff9b2f,#e94b18);color:#1a0804;box-shadow:0 0 16px #ff641844}
+body.murder-theme button.danger{background:#5b0d1c;border-color:#c32b42}
+body.murder-theme .playercard{background:#120912;border-color:#5d263c}
+body.murder-theme .tag{color:#ffad55}
+body.murder-theme #murderTimer{font-family:Georgia,serif;color:#ffb24f;font-size:28px!important;text-shadow:0 0 14px #ff5c00}
+body.murder-theme #missionArea h2{color:#ff8a24}
+body.murder-theme .alert{background:#35101a;border-color:#ff7138;color:#fff0e5}
+body.murder-theme .meeting{background:radial-gradient(circle,#65111c,#0b050b 72%)}
+body.murder-theme .meeting h1{color:#ff6840;text-shadow:0 0 30px #ff3c22aa}
+body.murder-theme #deadScreen{background:radial-gradient(circle,#35102d,#050307 72%)}
+body.murder-theme #deadScreen h1{color:#d9c7df}
+body.murder-theme #hostPanel>h2:before{content:"🎃 "}
+body.murder-theme #playerPanel:before{content:"🕯️ MURDER NIGHT";display:block;text-align:center;font-family:Georgia,serif;font-weight:900;letter-spacing:.18em;color:#ff8a24;margin-bottom:12px}
 </style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><div id="impostorsDefeated" class="victory"><div><div class="ship">👨‍🚀</div><h1>VICTOIRE !</h1><p>TOUS LES IMPOSTEURS SONT ÉLIMINÉS</p><div class="tag">VICTOIRE DES CREWMATES</div><button class="big" style="margin-top:30px" onclick="closeImpostorsDefeated()">FERMER</button></div></div><div id="meeting" class="victory meeting"><div style="width:min(680px,100%)"><div class="ship">🚨</div><h1>RÉUNION D’URGENCE</h1><p id="meetingText">UN CORPS A ÉTÉ SIGNALÉ</p><div id="voteStatus" class="tag">DISCUTEZ, PUIS VOTEZ</div><div id="voteChoices" class="players" style="margin-top:18px"></div><div id="voteResult" style="font-size:22px;font-weight:900;margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeMeeting()">FERMER</button></div></div><div id="reportPicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">💀</div><h1>CORPS TROUVÉ</h1><p>Quel joueur as-tu trouvé mort ?</p><div id="reportChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeReportPicker()">ANNULER</button></div></div><div id="justicePicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">⚖️</div><h1>ARRÊTER LE TUEUR</h1><p>Choisis la personne que tu penses être le tueur.</p><div id="justiceChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeJusticePicker()">ANNULER</button></div></div>
 <div id="eliminationPicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">☠️</div><h1>J’AI ÉLIMINÉ…</h1><p>Sélectionne le joueur que tu viens d’éliminer dans la partie.</p><div id="eliminationChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeEliminationPicker()">ANNULER</button></div></div><div id="deadScreen" class="victory meeting"><div><div class="ship">👻</div><h1>VOUS ÊTES MORT</h1><p>Tu as été éliminé de la partie.</p><div class="tag">👻 TU NE PEUX PLUS FAIRE D’ACTION</div><p class="small" style="margin-top:20px">Garde ton rôle secret et laisse les survivants continuer la partie.</p></div></div><main class="wrap">
-<div class="brand"><h1>LE AMONG US DE NOOPIX</h1><p>MISSION CONTROL // EVG</p><div class="small" style="margin-top:8px">VERSION 0.45 • MISE À JOUR : 04/10/2026</div></div>
+<div class="brand"><h1>LE AMONG US DE NOOPIX</h1><p>MISSION CONTROL // EVG</p><div class="small" style="margin-top:8px">VERSION 0.46 • MISE À JOUR : 04/10/2026</div></div>
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><label class="small">Mode de jeu</label><select id="hostMode" style="width:100%;margin:6px 0 12px"><option value="amongus">🚀 AMONG US</option><option value="murder">🔪 MURDER — 20 MIN</option></select><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div><div id="gameSettings" class="small" style="margin-top:8px"></div><div id="murderTimer" class="tag hidden" style="margin-top:10px;font-size:20px">⏱️ 20:00</div></div>
@@ -168,6 +197,11 @@ function openGame(){document.querySelector("#home").classList.add("hidden");docu
 function render(){
  if(!state)return;
  const gs=state.settings||{}, raw=state.players||{};
+ const isMurderTheme=gs.mode==="murder";
+ document.body.classList.toggle("murder-theme",isMurderTheme);
+ const brandTitle=document.querySelector(".brand h1"),brandSub=document.querySelector(".brand p");
+ if(brandTitle)brandTitle.textContent=isMurderTheme?"MURDER DE NOOPIX":"LE AMONG US DE NOOPIX";
+ if(brandSub)brandSub.textContent=isMurderTheme?"HALLOWEEN NIGHT // SURVIS 20 MINUTES":"MISSION CONTROL // EVG";
  const entries=Object.entries(raw).map(([k,v])=>[k,typeof v==="string"?{name:v,alive:true,role:null}:v]);
  const alive=entries.filter(([,v])=>v.alive!==false).length;
  const murderMode=gs.mode==="murder";
@@ -377,7 +411,7 @@ async function closeRoom(){
   returnHome("Salon fermé.");
  }catch(e){flash("❌ Impossible de fermer le salon");console.error(e)}
 }
-function returnHome(message=""){
+function returnHome(message=""){document.body.classList.remove("murder-theme");const bt=document.querySelector(".brand h1"),bs=document.querySelector(".brand p");if(bt)bt.textContent="LE AMONG US DE NOOPIX";if(bs)bs.textContent="MISSION CONTROL // EVG";
  if(unsub){unsub();unsub=null}
  localStorage.removeItem("skeld_session");
  if(room)localStorage.removeItem("skeld_role_seen_"+room);
