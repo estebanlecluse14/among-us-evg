@@ -14,7 +14,7 @@ input{background:#09131c;color:white;width:100%}button{background:#173144;color:
 .small{color:var(--muted);font-size:14px}.alert{position:fixed;inset:16px 16px auto;max-width:650px;margin:auto;background:#103d2b;border:2px solid var(--green);padding:18px;border-radius:16px;text-align:center;font-weight:900;z-index:10;transform:translateY(-160%);transition:.35s}.alert.show{transform:translateY(0)}
 .big{font-size:20px;padding:18px}.center{text-align:center}.tag{color:var(--green);font-weight:800}
  .victory{position:fixed;inset:0;background:radial-gradient(circle,#174d3a,#050b10 70%);z-index:100;display:none;align-items:center;justify-content:center;text-align:center;padding:25px}.victory.show{display:flex}.victory h1{font-size:clamp(42px,10vw,100px);margin:0;color:var(--green);text-shadow:0 0 35px #58e38c88}.victory p{font-size:clamp(18px,4vw,32px)}.victory .ship{font-size:80px;animation:win 1s ease-in-out infinite alternate}.meeting{background:radial-gradient(circle,#5a1118,#080506 72%)}.meeting h1{color:var(--red);text-shadow:0 0 35px #ff596488}.meeting .tag{color:#ffd3d6}@keyframes win{to{transform:translateY(-18px) scale(1.08)}}
-</style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><div id="meeting" class="victory meeting"><div style="width:min(680px,100%)"><div class="ship">🚨</div><h1>RÉUNION D’URGENCE</h1><p id="meetingText">UN CORPS A ÉTÉ SIGNALÉ</p><div id="voteStatus" class="tag">DISCUTEZ, PUIS VOTEZ</div><div id="voteChoices" class="players" style="margin-top:18px"></div><div id="voteResult" style="font-size:22px;font-weight:900;margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeMeeting()">FERMER</button></div></div><main class="wrap">
+</style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><div id="meeting" class="victory meeting"><div style="width:min(680px,100%)"><div class="ship">🚨</div><h1>RÉUNION D’URGENCE</h1><p id="meetingText">UN CORPS A ÉTÉ SIGNALÉ</p><div id="voteStatus" class="tag">DISCUTEZ, PUIS VOTEZ</div><div id="voteChoices" class="players" style="margin-top:18px"></div><div id="voteResult" style="font-size:22px;font-weight:900;margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeMeeting()">FERMER</button></div></div><div id="reportPicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">💀</div><h1>CORPS TROUVÉ</h1><p>Quel joueur as-tu trouvé mort ?</p><div id="reportChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeReportPicker()">ANNULER</button></div></div><main class="wrap">
 <div class="brand"><h1>LE AMONG US DE NOOPIX</h1><p>MISSION CONTROL // EVG</p></div>
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
@@ -161,7 +161,7 @@ async function devMission(){
  if(i<0){flash("✅ Toutes les missions sont déjà terminées.");return}await set(ref(db,"rooms/"+room+"/done/"+i),true);await addLog("🛠️ TEST : "+TASKS[i][0]);
 }
 async function devReport(){
- if(!isHost||!state?.started)return;const event={id:Date.now()+"_dev",by:"JOUEUR TEST",ts:Date.now()};await update(roomRef(),{lastReport:event,meeting:{active:true,id:event.id,votes:{}}});await addLog("🛠️ TEST : REPORT simulé — vote ouvert");
+ if(!isHost||!state?.started)return;const found=Object.entries(state.players||{}).find(([,v])=>(typeof v==="string"?true:v.alive!==false));if(!found)return;const [vk,vv]=found,v=typeof vv==="string"?{name:vv,role:"crewmate"}:vv,event={id:Date.now()+"_dev",by:"JOUEUR TEST",victimKey:vk,victimName:v.name,victimRole:v.role,ts:Date.now()};await update(roomRef(),{["players/"+vk+"/alive"]:false,lastReport:event,meeting:{active:true,id:event.id,votes:{},body:{key:vk,name:v.name,role:v.role}}});await addLog("🛠️ TEST : corps de "+v.name+" signalé — vote ouvert");
 }
 async function startGame(){
  if(!isHost||state?.started)return;
@@ -208,14 +208,24 @@ async function sabotageTask(i){
   beep(true);
  }catch(e){flash("❌ Sabotage impossible");console.error(e)}
 }
-async function report(){
+function report(){
+ const p=state?.players?.[safeKey(me)];
+ if(!state?.started){flash("⏳ La partie n’a pas encore commencé.");return}
+ if(p?.alive===false){flash("👻 Un joueur éliminé ne peut pas faire REPORT.");return}
+ const candidates=Object.entries(state.players||{}).map(([k,v])=>[k,typeof v==="string"?{name:v,alive:true}:v]).filter(([k,v])=>v.alive!==false&&k!==safeKey(me));
+ if(!candidates.length){flash("❌ Aucun joueur à signaler.");return}
+ document.querySelector("#reportChoices").innerHTML=candidates.map(([k,v])=>'<button onclick="confirmReport(\''+k+'\')">💀 '+esc(v.name)+'</button>').join("");
+ document.querySelector("#reportPicker").classList.add("show");
+}
+function closeReportPicker(){document.querySelector("#reportPicker").classList.remove("show")}
+async function confirmReport(victimKey){
  try{
-  const p=state?.players?.[safeKey(me)];
-  if(!state?.started){flash("⏳ La partie n’a pas encore commencé.");return}
-  if(p?.alive===false){flash("👻 Un joueur éliminé ne peut pas faire REPORT.");return}
-  const event={id:Date.now()+"_"+Math.random().toString(36).slice(2,7),by:me,ts:Date.now()};
-  await update(roomRef(),{lastReport:event,meeting:{active:true,id:event.id,votes:{}}});
-  await addLog("🚨 "+me+" signale un corps ! Vote ouvert.");
+  const reporter=state?.players?.[safeKey(me)],victim=state?.players?.[victimKey];
+  if(!reporter||reporter.alive===false||!victim||victim.alive===false)return;
+  const event={id:Date.now()+"_"+Math.random().toString(36).slice(2,7),by:me,victimKey,victimName:victim.name,victimRole:victim.role,ts:Date.now()};
+  closeReportPicker();
+  await update(roomRef(),{["players/"+victimKey+"/alive"]:false,lastReport:event,meeting:{active:true,id:event.id,votes:{},body:{key:victimKey,name:victim.name,role:victim.role}}});
+  await addLog("🚨 "+me+" a trouvé le corps de "+victim.name+" — rôle révélé : "+(victim.role==="impostor"?"IMPOSTEUR":"CREWMATE"));
  }catch(e){flash("❌ REPORT impossible");console.error(e)}
 }
 async function leaveGame(){
@@ -253,7 +263,7 @@ async function newGame(){
  }catch(e){flash("❌ Impossible de terminer la partie");console.error(e)}
 }
 function showVictory(){document.querySelector("#victory").classList.add("show");victorySound();try{navigator.vibrate?.([200,100,200])}catch{}}
-function showMeeting(by){document.querySelector("#meetingText").textContent="🚨 "+by+" A SIGNALÉ UN CORPS";document.querySelector("#meeting").classList.add("show");renderMeeting();beep(true);try{navigator.vibrate?.([300,120,300,120,500])}catch{}}
+function showMeeting(by){const b=state?.meeting?.body||state?.lastReport;document.querySelector("#meetingText").textContent=b?.victimName||b?.name?"💀 "+(b.victimName||b.name)+" EST MORT — "+((b.victimRole||b.role)==="impostor"?"🔴 IMPOSTEUR":"🔵 CREWMATE")+" • signalé par "+by:"🚨 "+by+" A SIGNALÉ UN CORPS";document.querySelector("#meeting").classList.add("show");renderMeeting();beep(true);try{navigator.vibrate?.([300,120,300,120,500])}catch{}}
 function renderMeeting(){
  const box=document.querySelector("#voteChoices"),status=document.querySelector("#voteStatus"),result=document.querySelector("#voteResult");if(!box||!state?.meeting)return;
  const players=Object.entries(state.players||{}).map(([k,v])=>[k,typeof v==="string"?{name:v,alive:true}:v]).filter(([,v])=>v.alive!==false);
@@ -284,7 +294,7 @@ function victorySound(){try{const ctx=new AudioContext();const notes=[523,659,78
 function flash(s){let a=document.querySelector("#alert");a.textContent=s;a.classList.add("show");setTimeout(()=>a.classList.remove("show"),3000)}
 function beep(long=false){try{let c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=long?220:660;g.gain.value=.08;o.start();o.stop(c.currentTime+(long?.6:.18))}catch{}}
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
-window.host=host;window.join=join;window.devFillPlayers=devFillPlayers;window.devClearPlayers=devClearPlayers;window.devMission=devMission;window.devReport=devReport;window.startGame=startGame;window.revealMyRole=revealMyRole;window.hideRole=hideRole;window.completeTask=completeTask;window.sabotageTask=sabotageTask;window.report=report;window.castVote=castVote;window.newGame=newGame;window.leaveGame=leaveGame;window.closeRoom=closeRoom;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
+window.host=host;window.join=join;window.devFillPlayers=devFillPlayers;window.devClearPlayers=devClearPlayers;window.devMission=devMission;window.devReport=devReport;window.startGame=startGame;window.revealMyRole=revealMyRole;window.hideRole=hideRole;window.completeTask=completeTask;window.sabotageTask=sabotageTask;window.report=report;window.confirmReport=confirmReport;window.closeReportPicker=closeReportPicker;window.castVote=castVote;window.newGame=newGame;window.leaveGame=leaveGame;window.closeRoom=closeRoom;window.closeVictory=closeVictory;window.closeMeeting=closeMeeting;
 (async function restoreSession(){
  try{
   const s=JSON.parse(localStorage.getItem("skeld_session")||"null");
