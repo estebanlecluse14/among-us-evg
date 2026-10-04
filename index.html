@@ -24,7 +24,7 @@ body{overflow-y:auto!important}
   #hostPanel{overflow:visible!important;max-height:none!important}
 }
 </style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><div id="impostorsDefeated" class="victory"><div><div class="ship">👨‍🚀</div><h1>VICTOIRE !</h1><p>TOUS LES IMPOSTEURS SONT ÉLIMINÉS</p><div class="tag">VICTOIRE DES CREWMATES</div><button class="big" style="margin-top:30px" onclick="closeImpostorsDefeated()">FERMER</button></div></div><div id="meeting" class="victory meeting"><div style="width:min(680px,100%)"><div class="ship">🚨</div><h1>RÉUNION D’URGENCE</h1><p id="meetingText">UN CORPS A ÉTÉ SIGNALÉ</p><div id="voteStatus" class="tag">DISCUTEZ, PUIS VOTEZ</div><div id="voteChoices" class="players" style="margin-top:18px"></div><div id="voteResult" style="font-size:22px;font-weight:900;margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeMeeting()">FERMER</button></div></div><div id="reportPicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">💀</div><h1>CORPS TROUVÉ</h1><p>Quel joueur as-tu trouvé mort ?</p><div id="reportChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeReportPicker()">ANNULER</button></div></div><div id="eliminationPicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">☠️</div><h1>J’AI ÉLIMINÉ…</h1><p>Sélectionne le joueur que tu viens d’éliminer dans la partie.</p><div id="eliminationChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeEliminationPicker()">ANNULER</button></div></div><div id="deadScreen" class="victory meeting"><div><div class="ship">👻</div><h1>VOUS ÊTES MORT</h1><p>Tu as été éliminé de la partie.</p><div class="tag">👻 TU NE PEUX PLUS FAIRE D’ACTION</div><p class="small" style="margin-top:20px">Garde ton rôle secret et laisse les survivants continuer la partie.</p></div></div><main class="wrap">
-<div class="brand"><h1>LE AMONG US DE NOOPIX</h1><p>MISSION CONTROL // EVG</p><div class="small" style="margin-top:8px">VERSION 0.36 • MISE À JOUR : 04/10/2026</div></div>
+<div class="brand"><h1>LE AMONG US DE NOOPIX</h1><p>MISSION CONTROL // EVG</p><div class="small" style="margin-top:8px">VERSION 0.37 DEBUG • MISE À JOUR : 04/10/2026</div></div>
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div><div id="gameSettings" class="small" style="margin-top:8px"></div></div>
@@ -68,6 +68,8 @@ async function join(){
   const snap=await get(ref(db,"rooms/"+room));
   if(!snap.exists()){status.textContent="❌ Salle "+room+" introuvable. Vérifie le code affiché sur le PC.";return}
   const roomData=snap.val(), maxPlayers=Number(roomData.settings?.playerCount||99), currentPlayers=Object.keys(roomData.players||{}).length;
+  const duplicateName=Object.values(roomData.players||{}).some(v=>(typeof v==="string"?v:v?.name)?.toLowerCase()===me.toLowerCase());
+  if(duplicateName){status.textContent="❌ Ce prénom est déjà utilisé dans ce salon.";return}
   const existing=roomData.players?.[safeKey(me)];
   if(roomData.started && !existing){status.textContent="❌ La partie a déjà commencé.";return}
   if(!existing && currentPlayers>=maxPlayers){status.textContent="❌ La partie est complète ("+maxPlayers+" joueurs).";return}
@@ -104,7 +106,10 @@ function listen(){
   const completed=Object.values(d).filter(v=>v===true).length;
 
   if(completed<TASKS.length) victoryShown=false;
-  if(isHost&&previous&&JSON.stringify(previous.done||{})!==JSON.stringify(d)){flash("✓ MISSION VALIDÉE !");beep()}
+  if(isHost&&previous&&JSON.stringify(previous.done||{})!==JSON.stringify(d)){
+    const oldD=previous.done||{},completedNow=Object.keys(d).some(k=>d[k]===true&&oldD[k]!==true);
+    if(completedNow){flash("✓ MISSION VALIDÉE !");beep()}
+  }
   if(completed>=TASKS.length&&!victoryShown){victoryShown=true;setTimeout(showVictory,250)}
   if(state?.started){
     const roster=Object.values(state.players||{}).filter(v=>typeof v!=="string");
@@ -245,6 +250,7 @@ async function sabotageTask(i){
  }catch(e){flash("❌ Sabotage impossible");console.error(e)}
 }
 function openEliminationPicker(){
+ if(state?.meeting?.active){flash("🗳️ Réunion en cours.");return}
  const [,actor]=myPlayerEntry();
  if(!state?.started||actor?.role!=="impostor"||actor?.alive===false){flash("❌ Action réservée à l’imposteur vivant.");return}
  const wait=Math.max(0,Number(actor.nextEliminationAt||0)-Date.now());
@@ -257,24 +263,26 @@ function openEliminationPicker(){
 function closeEliminationPicker(){document.querySelector("#eliminationPicker").classList.remove("show")}
 async function confirmElimination(targetKey){
  try{
-  const actor=state?.players?.[safeKey(me)],target=state?.players?.[targetKey];
+  const [actorKey,actor]=myPlayerEntry(),target=state?.players?.[targetKey];
   if(!actor||actor.role!=="impostor"||actor.alive===false||!target||target.alive===false||target.role==="impostor")return;
   if(Number(actor.nextEliminationAt||0)>Date.now()){closeEliminationPicker();flash("⏳ Élimination en recharge.");return;}
   closeEliminationPicker();
-  const now=Date.now(); await update(roomRef(),{["players/"+targetKey+"/alive"]:false,["players/"+targetKey+"/eliminatedByImpostor"]:true,["players/"+targetKey+"/eliminatedAt"]:now,["players/"+myPlayerEntry()[0]+"/nextEliminationAt"]:now+10000});
+  const now=Date.now(); await update(roomRef(),{["players/"+targetKey+"/alive"]:false,["players/"+targetKey+"/eliminatedByImpostor"]:true,["players/"+targetKey+"/eliminatedAt"]:now,["players/"+actorKey+"/nextEliminationAt"]:now+10000});
   flash("☠️ "+target.name+" est éliminé.");
  }catch(e){flash("❌ Action impossible");console.error(e)}
 }
 function report(){
+ if(state?.meeting?.active){flash("🗳️ Réunion en cours.");return}
  const [,p]=myPlayerEntry();
  if(!state?.started){flash("⏳ La partie n’a pas encore commencé.");return}
  if(p?.alive===false){flash("👻 Un joueur éliminé ne peut pas faire REPORT.");return}
- const candidates=Object.entries(state.players||{}).map(([k,v])=>[k,typeof v==="string"?{name:v,alive:true}:v]).filter(([k,v])=>v.alive!==false&&k!==safeKey(me));
- if(!candidates.length){flash("❌ Aucun joueur à signaler.");return}
+ const candidates=Object.entries(state.players||{}).map(([k,v])=>[k,typeof v==="string"?{name:v,alive:true}:v]).filter(([k,v])=>v.alive===false&&v.eliminatedByImpostor===true&&v.reported!==true);
+ if(!candidates.length){flash("❌ Aucun corps non signalé.");return}
  document.querySelector("#reportChoices").innerHTML=candidates.map(([k,v])=>'<button onclick="confirmReport(\''+k+'\')">💀 '+esc(v.name)+'</button>').join("");
  document.querySelector("#reportPicker").classList.add("show");
 }
 function reportKiller(){
+ if(state?.meeting?.active){flash("🗳️ Réunion en cours.");return}
  const [,p]=myPlayerEntry();
  if(!state?.started){flash("⏳ La partie n’a pas encore commencé.");return}
  if(p?.alive===false){flash("👻 Un joueur éliminé ne peut pas signaler un tueur.");return}
@@ -303,10 +311,10 @@ function closeReportPicker(){
 async function confirmReport(victimKey){
  try{
   const [,reporter]=myPlayerEntry(),victim=state?.players?.[victimKey];
-  if(!reporter||reporter.alive===false||!victim||victim.alive===false)return;
+  if(!reporter||reporter.alive===false||!victim||victim.alive!==false||victim.eliminatedByImpostor!==true||victim.reported===true)return;
   const event={id:Date.now()+"_"+Math.random().toString(36).slice(2,7),by:me,victimKey,victimName:victim.name,victimRole:victim.role,ts:Date.now()};
   closeReportPicker();
-  await update(roomRef(),{["players/"+victimKey+"/alive"]:false,lastReport:event,meeting:{active:true,id:event.id,votes:{},result:null,body:{key:victimKey,name:victim.name,role:victim.role}}});
+  await update(roomRef(),{["players/"+victimKey+"/reported"]:true,lastReport:event,meeting:{active:true,id:event.id,votes:{},result:null,body:{key:victimKey,name:victim.name,role:victim.role}}});
   await addLog("🚨 "+me+" a trouvé le corps de "+victim.name+" — rôle révélé : "+(victim.role==="impostor"?"IMPOSTEUR":"CREWMATE"));
  }catch(e){flash("❌ REPORT impossible");console.error(e)}
 }
@@ -328,7 +336,7 @@ function returnHome(message=""){
  if(unsub){unsub();unsub=null}
  localStorage.removeItem("skeld_session");
  if(room)localStorage.removeItem("skeld_role_seen_"+room);
- closeVictory();closeMeeting();document.querySelector("#deadScreen")?.classList.remove("show");
+ closeVictory();closeMeeting();closeImpostorsDefeated();closeReportPicker();closeEliminationPicker();document.querySelector("#deadScreen")?.classList.remove("show");
  room="";me="";isHost=false;state=null;victoryShown=false;impostorVictoryShown=false;
  document.querySelector("#game").classList.add("hidden");
  document.querySelector("#home").classList.remove("hidden");
@@ -402,7 +410,7 @@ async function castVote(target){
  if(validVotes.length>=alive.length)await resolveVote(s);
 }
 async function resolveVote(s){
- if(s.meeting?.result)return;const counts={};Object.values(s.meeting?.votes||{}).forEach(t=>counts[t]=(counts[t]||0)+1);
+ if(s.meeting?.result)return;const aliveKeys=new Set(Object.entries(s.players||{}).filter(([,v])=>(typeof v==="string"?true:v.alive!==false)).map(([k])=>k)),counts={};Object.entries(s.meeting?.votes||{}).filter(([k])=>aliveKeys.has(k)).forEach(([,t])=>counts[t]=(counts[t]||0)+1);
  const ranked=Object.entries(counts).sort((a,b)=>b[1]-a[1]);let target=null,tie=false;
  if(ranked.length){tie=ranked.length>1&&ranked[0][1]===ranked[1][1];if(!tie&&ranked[0][0]!=="__skip__")target=ranked[0][0]}
  const updates={};let res={id:Date.now()+"_result",ejected:false,tie};
