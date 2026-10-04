@@ -24,7 +24,7 @@ body{overflow-y:auto!important}
   #hostPanel{overflow:visible!important;max-height:none!important}
 }
 </style></head><body><div id="alert" class="alert">✓ MISSION VALIDÉE</div><div id="victory" class="victory"><div><div class="ship">🚀</div><h1>VICTOIRE !</h1><p>TOUTES LES MISSIONS SONT TERMINÉES</p><div class="tag">L’ÉQUIPAGE A SAUVÉ THE SKELD</div><button class="big" style="margin-top:30px" onclick="closeVictory()">FERMER</button></div></div><div id="impostorsDefeated" class="victory"><div><div class="ship">👨‍🚀</div><h1>VICTOIRE !</h1><p>TOUS LES IMPOSTEURS SONT ÉLIMINÉS</p><div class="tag">VICTOIRE DES CREWMATES</div><button class="big" style="margin-top:30px" onclick="closeImpostorsDefeated()">FERMER</button></div></div><div id="meeting" class="victory meeting"><div style="width:min(680px,100%)"><div class="ship">🚨</div><h1>RÉUNION D’URGENCE</h1><p id="meetingText">UN CORPS A ÉTÉ SIGNALÉ</p><div id="voteStatus" class="tag">DISCUTEZ, PUIS VOTEZ</div><div id="voteChoices" class="players" style="margin-top:18px"></div><div id="voteResult" style="font-size:22px;font-weight:900;margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeMeeting()">FERMER</button></div></div><div id="reportPicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">💀</div><h1>CORPS TROUVÉ</h1><p>Quel joueur as-tu trouvé mort ?</p><div id="reportChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeReportPicker()">ANNULER</button></div></div><div id="eliminationPicker" class="victory meeting"><div style="width:min(620px,100%)"><div class="ship">☠️</div><h1>J’AI ÉLIMINÉ…</h1><p>Sélectionne le joueur que tu viens d’éliminer dans la partie.</p><div id="eliminationChoices" class="players" style="margin-top:18px"></div><button class="big" style="margin-top:22px" onclick="closeEliminationPicker()">ANNULER</button></div></div><div id="deadScreen" class="victory meeting"><div><div class="ship">👻</div><h1>VOUS ÊTES MORT</h1><p>Tu as été éliminé de la partie.</p><div class="tag">👻 TU NE PEUX PLUS FAIRE D’ACTION</div><p class="small" style="margin-top:20px">Garde ton rôle secret et laisse les survivants continuer la partie.</p></div></div><main class="wrap">
-<div class="brand"><h1>LE AMONG US DE NOOPIX</h1><p>MISSION CONTROL // EVG</p><div class="small" style="margin-top:8px">VERSION 0.38 • MISE À JOUR : 04/10/2026</div></div>
+<div class="brand"><h1>LE AMONG US DE NOOPIX</h1><p>MISSION CONTROL // EVG</p><div class="small" style="margin-top:8px">VERSION 0.39 • MISE À JOUR : 04/10/2026</div></div>
 <section id="home" class="card"><h2>🚀 Rejoindre la partie</h2><div id="joinStatus" class="small" style="margin-bottom:10px"></div><input id="name" maxlength="18" placeholder="Ton prénom"><div class="row" style="margin-top:10px"><input id="roomInput" maxlength="4" placeholder="Code de salle"><button class="primary" onclick="join()">REJOINDRE</button></div><hr style="border-color:#284252;margin:20px 0"><h3>🖥️ Créer une partie</h3><div class="row"><div><label class="small">Nombre de joueurs</label><input id="hostPlayers" type="number" min="3" max="30" value="8"></div><div><label class="small">Nombre d’imposteurs</label><input id="hostImpostors" type="number" min="1" max="10" value="2"></div></div><button class="big primary" style="width:100%;margin-top:10px" onclick="host()">CRÉER UNE PARTIE</button><p class="small">Version Firebase : la console et les téléphones utilisent la même partie en temps réel.</p></section>
 <section id="game" class="hidden">
 <div class="card center"><div class="small">CODE DE LA PARTIE</div><div id="roomCode" class="code"></div><div id="role" class="tag"></div><div id="gameSettings" class="small" style="margin-top:8px"></div></div>
@@ -179,7 +179,7 @@ function render(){
  let done=state.done||{},logs=Object.values(state.log||{}).sort((a,b)=>(b.ts||0)-(a.ts||0));
  let n=Object.values(done).filter(Boolean).length,p=Math.round(n/TASKS.length*100);
  document.querySelector("#pct").textContent=p+"%";document.querySelector("#fill").style.width=p+"%";
- let rows=TASKS.map((t,i)=>'<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><span>'+(done[i]?'✅':'⬜')+'</span></div>').join("");
+ let rows=TASKS.map((t,i)=>{const validator=state.taskValidatedBy?.[i];return '<div class="task '+(done[i]?'done':'')+'"><div><b>'+t[0]+'</b><div class="small">'+t[1]+'</div></div><span style="text-align:right">'+(done[i]?'✅':'⬜')+(done[i]&&validator?'<div class="small" style="margin-top:4px">👤 '+esc(validator)+'</div>':'')+'</span></div>'}).join("");
  document.querySelector("#hostTasks").innerHTML=rows;
  const [,myPlayer]=!isHost?myPlayerEntry():[null,null],myImpostor=myPlayer?.role==="impostor";
  const deadScreen=document.querySelector("#deadScreen");
@@ -219,7 +219,7 @@ async function devClearPlayers(){
 }
 async function devMission(){
  if(!isHost||!state?.started)return;const d=state.done||{};const i=TASKS.findIndex((_,x)=>!d[x]);
- if(i<0){flash("✅ Toutes les missions sont déjà terminées.");return}await set(ref(db,"rooms/"+room+"/done/"+i),true);await addLog("🛠️ TEST : "+TASKS[i][0]);
+ if(i<0){flash("✅ Toutes les missions sont déjà terminées.");return}await update(roomRef(),{["done/"+i]:true,["taskValidatedBy/"+i]:me});await addLog("🛠️ TEST : "+TASKS[i][0]);
 }
 async function devReport(){
  if(!isHost||!state?.started)return;const found=Object.entries(state.players||{}).find(([,v])=>(typeof v==="string"?true:v.alive!==false));if(!found)return;const [vk,vv]=found,v=typeof vv==="string"?{name:vv,role:"crewmate"}:vv,event={id:Date.now()+"_dev",by:"JOUEUR TEST",victimKey:vk,victimName:v.name,victimRole:v.role,ts:Date.now()};await update(roomRef(),{["players/"+vk+"/alive"]:false,lastReport:event,meeting:{active:true,id:event.id,votes:{},result:null,body:{key:vk,name:v.name,role:v.role}}});await addLog("🛠️ TEST : corps de "+v.name+" signalé — vote ouvert");
@@ -262,7 +262,7 @@ async function sabotageTask(i){
   if(p?.alive===false){flash("👻 Tu es éliminé.");return}
   if(p?.role!=="impostor"){flash("❌ Sabotage réservé à l’imposteur.");return}
   if(!state?.done?.[i]){flash("⚠️ Cette épreuve n’est pas encore validée.");return}
-  await set(ref(db,"rooms/"+room+"/done/"+i),false);
+  await update(roomRef(),{["done/"+i]:false,["taskValidatedBy/"+i]:null});
   await set(ref(db,"rooms/"+room+"/lastSabotage"),{id:Date.now()+"_"+Math.random().toString(36).slice(2,7),task:i,ts:Date.now()});
   await addLog("⚠️ SABOTAGE : "+TASKS[i][0]+" doit être refaite !");
   flash("☠️ Sabotage réussi — l’épreuve doit être refaite !");
@@ -373,6 +373,7 @@ async function newGame(){
   const shuffled=[...keys].sort(()=>Math.random()-.5),updates={
    started:true,startedAt:Date.now(),round:Number(state?.round||1)+1,
    done:{0:false,1:false,2:false,3:false,4:false},
+   taskValidatedBy:null,
    lastReport:null,lastSabotage:null,meeting:null
   };
   keys.forEach(k=>{const v=typeof raw[k]==="string"?{name:raw[k]}:raw[k];updates["players/"+k]={name:v.name,alive:true,role:shuffled.slice(0,impCount).includes(k)?"impostor":"crewmate",...(v.test?{test:true}:{})};if(!v.test&&!state.scores?.[k])updates["scores/"+k]={name:v.name,points:0,wins:0}});
