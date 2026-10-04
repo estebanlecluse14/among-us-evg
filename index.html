@@ -33,7 +33,7 @@ const TASKS=[
 ["Électricité","Fais passer le câble dans le labyrinthe en relief, du point A au point B."],
 ["O2","Gonfle les 6 ballons aux bonnes tailles pour qu’ils correspondent aux 6 emplacements."],
 ["MedBay / Infirmerie","Réussis l’épreuve du Docteur Maboul."],
-["Remettez le Commandant Mathieu à l’endroit !","Reconstitue les 3 puzzles du Commandant Mathieu."]
+["Course de l’œuf","Fais le tour complet du terrain avec une cuillère et un œuf, sans faire tomber l’œuf."]
 ];
 let room="",me="",isHost=false,state=null,unsub=null,victoryShown=false;
 function fresh(code,playerCount=8,impostorCount=2){return {code,settings:{playerCount,impostorCount},round:1,players:{},done:{0:false,1:false,2:false,3:false,4:false},log:{created:{text:"Partie créée",ts:Date.now()}}}}
